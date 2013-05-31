@@ -1,0 +1,97 @@
+// Shift Guides, a.k.a. Offset Guides
+// v.01
+// This command allows you to shift guides on the current artboard or canvas by a positive or negative pixel value—along the X axis, the Y axis or both. This may be helpful in instances where an object or objects have been moved and their guides need to be repositioned.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+// USER VARIABLES
+
+var offset = "0, 25";		// Enter preferred X,Y offset here
+var xAxisOnly = 100;  		// Single-axis offsets
+var yAxisOnly = 100;
+var userInput = true;
+
+// SCRIPT STARTS HERE
+
+// Determine context ++++++++++++
+
+var context, contextName;
+if (doc.currentPage().currentArtboard() != null) {
+	context = doc.currentPage().currentArtboard();
+	contextName = "current artboard";
+	}
+else {
+	context = doc.currentPage();
+	contextName = "canvas";
+}
+var xRuler = context.horizontalRulerData();
+var yRuler = context.verticalRulerData();
+var xLength = xRuler.numberOfGuides();
+var yLength = yRuler.numberOfGuides();
+
+// Input and defining offset +++++++++++++++++
+
+var instruction;
+if (xLength !=0 && yLength !=0) {
+	instruction = "Enter X, Y offset in pixels";
+	offset = offset;
+	}
+else if (xLength !=0) {
+	instruction = "Enter X offset in pixels";
+	offset = xAxisOnly.toString();
+	}
+else if (yLength !=0) {
+	instruction = "Enter Y offset in pixels";
+	offset = yAxisOnly.toString();
+	}
+else {doc.showMessage("There are no guides on the " + contextName + ".")}
+
+if ((userInput == true) && (xLength !=0 || yLength !=0)) {
+	offset = doc.askForUserInput_initialValue(instruction, offset);
+}
+
+// Parsing offset +++++++++++++++++++
+
+var xOffset, yOffset;
+var parsedInput = offset.split(",", 2); // convert string to array
+if (parsedInput.length == 2) {
+	xOffset = parseFloat(parsedInput[0]);
+	yOffset = parseFloat(parsedInput[1]);
+}
+else if (parsedInput.length < 2) {
+	xOffset = yOffset = parseFloat(parsedInput[0]);
+}
+
+// Add guides ++++++++++++++
+
+// Loop: Read value (or values), remove guide, add new guide plus/minus offset. If offset = 0, leave that data alone.
+
+if ((xLength > 0) && (xOffset != 0)) {
+	var xGuides = new Array();
+	for (var i=0; i<xLength; i++) {
+		xGuides.push(xRuler.guideAtIndex(0));
+		xRuler.removeGuideAtIndex(0);
+	}
+	for (var i=0; i<xGuides.length; i++) {
+		xRuler.addGuideWithValue(xGuides[i] + xOffset);
+	}
+}
+if ((yLength > 0) && (yOffset != 0)) {
+	var yGuides = new Array();
+	for (var i=0; i<yLength; i++) {
+		yGuides.push(yRuler.guideAtIndex(0));
+		yRuler.removeGuideAtIndex(0);
+	}
+	for (var i=0; i<yGuides.length; i++) {
+		yRuler.addGuideWithValue(yGuides[i] + yOffset);
+	}
+}
+
+
+// NOTES
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

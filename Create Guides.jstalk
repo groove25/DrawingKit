@@ -1,0 +1,289 @@
+// Create Guides
+// v.05x
+// Create Guides is a multi-faceted command that allows you to quickly generate guides based on one or more selected objects, the boundaries of a selection, or an artboard or canvas. To apply guides to one or more objects, simply select the objects on the artboard or canvas, run the command, and enter the desired axes in the input dialog (L = left, R = right, T = top, B = bottom, H = horizontal center, V = vertical center). To apply guides based on the boundaries of the entire selection, hold the Option key while choosing the command. If nothing is selected on an artboard or canvas, the script will allow you to create incremental guides based on X, Y values that you specify. For the canvas, you may also specify boundaries (width and height) for the guides.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+
+// USER VARIABLES
+// If there's a guides setting that you use frequently, you may enter its value below, and it will appear as the suggested value within the User Input dialog. Alternatively, you may disable user input so that this setting will be applied automatically every time the script is run.
+// For axis, choose: "sides", "center", "all", "L", "R", "T", "B", "H", "V"
+
+var axis = "all";    	// Enter preferred axis setting here
+var userInput = true;	// To disable user input, set to false
+var tooltip = true;
+
+var xIncrement = 20;	// These variables affect artboards and/or canvases
+var yIncrement = 20;
+var xOffset = -10;		// These adjust content bounds (for canvas), if needed
+var yOffset = -10;
+var contentOverride = false; 	// Use to override content bounds, if desired
+var width = 960;
+var height = 960;
+
+// SCRIPT STARTS HERE
+
+// Modifier key: Option ++++++++++++++++++
+
+var modFlagOption = Math.pow(2,19);
+var modFlags = [NSEvent modifierFlags];
+var selectionBounds;
+	if (modFlags & modFlagOption) {selectionBounds = true}
+
+// Determine context ++++++++++++++
+
+var context, artboard;
+var contentWidth, contentHeight;
+
+if (doc.currentPage().currentArtboard() != null) {
+	context = doc.currentPage().currentArtboard();
+	artboard = true;
+	}
+else {
+	context = doc.currentPage();
+	contentWidth = context.contentBounds().width();
+	contentHeight = context.contentBounds().height();
+}
+
+// Setting and parsing input +++++++++++++++++
+
+// OBJECT + SELECTION
+if (selection != null && selection.length() > 0) {
+	if (userInput == true) {
+		axis = doc.askForUserInput_initialValue("Choose: sides, center, all, L, R, T, B, H, V", axis);
+	}
+	axis = axis.toLowerCase();
+	axis = axis.replace(/\s/g,''); // remove whitespace
+	axis = axis.split(",", 6); // convert string to array, up to 6 values
+}
+
+// ARTBOARD
+// Add .toString() to increments and contentWidth, etc?
+// Replace regExp with parseFloat()?
+
+else if ((selection == null || selection.length() == 0) && (artboard == true)) {
+	if (userInput == true) {
+		var increments = doc.askForUserInput_initialValue("Enter X, Y increments in pixels.", xIncrement + ", " + yIncrement);
+
+		var parsedInput = increments.split(",", 2);
+		if (parsedInput.length == 2) {
+			xIncrement = parsedInput[0].replace(/[^\d.-]/g, '');
+			yIncrement = parsedInput[1].replace(/[^\d.-]/g, '');
+		}
+		else if (parsedInput.length < 2) {
+			xIncrement = yIncrement = parsedInput[0].replace(/[^\d.-]/g, '');
+		}
+	}
+}
+// CANVAS
+else if ((selection == null || selection.length() == 0) && (artboard != true)) {
+	
+	// NOTE: contentBounds X and Y position must also be adjusted for offset!
+	if (xOffset !=0) {contentWidth = contentWidth + (xOffset * 2);}
+	if (yOffset !=0) {contentHeight = contentHeight + (yOffset * 2);}
+	
+	if (contentOverride != true) {
+		width = contentWidth;
+		height = contentHeight;
+	}
+	if (userInput == true) {
+		var increments = doc.askForUserInput_initialValue("Enter X, Y increments plus boundaries.", xIncrement + ", " + yIncrement + ", " + width + ", " + height);
+
+		var parsedInput = increments.split(",", 4);
+		if (parsedInput.length < 2) {
+			xIncrement = yIncrement = parsedInput[0].replace(/[^\d.-]/g, '');
+		}
+		if (parsedInput.length >= 2) {
+			xIncrement = parsedInput[0].replace(/[^\d.-]/g, '');
+			yIncrement = parsedInput[1].replace(/[^\d.-]/g, '');
+		}
+		if (parsedInput.length == 3) {
+			width = height = parsedInput[2].replace(/[^\d.-]/g, '');
+		}
+		if (parsedInput.length == 4) {
+			width = parsedInput[2].replace(/[^\d.-]/g, '');
+			height = parsedInput[3].replace(/[^\d.-]/g, '');
+		}
+	}
+}
+
+// Tooltip ++++++++++++++++++++++
+
+if (tooltip == true && selection != null && selection.length() > 1 && selectionBounds != true) {
+	doc.showMessage("For selection guides, hold Option key.");
+	//"Hold Option key to apply guides to selection bounds."
+}
+
+// Find selection boundaries +++++++++++++++
+
+var x1, x2, y1, y2, xMid, yMid;
+
+if ((selectionBounds == true) && (selection.length() > 1)) {
+	var minXs = new Array(); 
+	var maxXs = new Array();
+	var minYs = new Array();
+	var maxYs = new Array();
+
+	for (var i=0; i<selection.length(); i++) {
+		var rect = selection[i].absoluteRect();
+		minXs.push(rect.x());
+		maxXs.push(rect.x() + rect.width());
+		minYs.push(rect.y());
+		maxYs.push(rect.y() + rect.height());
+	}
+	x1 = Math.min.apply(Math, minXs);
+	x2 = Math.max.apply(Math, maxXs);
+	y1 = Math.min.apply(Math, minYs);
+	y2 = Math.max.apply(Math, maxYs);
+
+	// Find mid-values
+	xMid = (x1 + x2)/2;
+	yMid = (y1 + y2)/2;
+}
+
+// Find context bounds + position +++++++++++++++
+
+var xCenter, yCenter, xStart, yStart;
+if (selection == null || selection.length() == 0) {
+
+	if (artboard == true) {
+		width = context.absoluteRect().width();
+		height = context.absoluteRect().height();
+	}
+	if (artboard != true) {
+		var cB = doc.currentPage().contentBounds();
+		var cBx = cB.x() - xOffset; // See User Variables for this value
+		var cBy = cB.y() - yOffset;
+		var aR = doc.currentPage().absoluteRect();
+		var aRxDiff = aR.rulerX() - aR.x(); // e.g. 157 - 0 = 157
+		var aRyDiff = aR.rulerY() - aR.y(); // e.g. 64 - 0 = 64
+		var cBxRuler = cBx + aRxDiff; // Actual ruler x,y for cB
+		var cByRuler = cBy + aRyDiff;
+
+		xCenter = cBxRuler + (contentWidth/2);
+		yCenter = cByRuler + (contentHeight/2);
+		xStart = Math.round(xCenter - (width/2)); //inputWidth, not contentWidth
+		yStart = Math.round(yCenter - (height/2)); // inputHeight
+	}
+}
+
+// Create arrays of X and Y values ++++++++++++++++
+
+var xValues = new Array();
+var yValues = new Array();
+
+var rulerXDiff, rulerYDiff;
+if (artboard == true) {
+	var artRect = context.absoluteRect();
+	rulerXDiff = artRect.rulerX() - artRect.x();
+	rulerYDiff = artRect.rulerY() - artRect.y();
+}
+else {
+	var pageRect = context.absoluteRect();
+	rulerXDiff = pageRect.rulerX() - pageRect.x();
+	rulerYDiff = pageRect.rulerY() - pageRect.y();
+}
+
+function createAxisArrays() {
+	for (var a=0; a<axis.length; a++) {
+		if (["l", "left", "sides", "s", "all", "a"].indexOf(axis[a]) > -1) {
+			xValues.push(x1 + rulerXDiff);
+		}
+		if (["r", "right", "sides", "s", "all", "a"].indexOf(axis[a]) > -1) {
+			xValues.push(x2 + rulerXDiff);
+		}
+		if (["t", "top", "sides", "s", "all", "a"].indexOf(axis[a]) > -1) {
+			yValues.push(y1 + rulerYDiff);
+		}
+		if (["b", "bottom", "sides", "s", "all", "a"].indexOf(axis[a]) > -1) {
+			yValues.push(y2 + rulerYDiff);
+		}
+		if (["h", "hc", "horz", "horizon", "horizontal", "horizontalcenter", "center", "c", "all", "a"].indexOf(axis[a]) > -1) {
+			yValues.push(yMid + rulerYDiff);
+		}
+		if (["v", "vc", "vert", "vertical", "verticalcenter", "center", "c", "all", "a"].indexOf(axis[a]) > -1) {
+			xValues.push(xMid + rulerXDiff);
+		}
+	}
+}
+
+// NOTE: Selection guides have pre-defined x1, x2, y1, y2, xMid, yMid values that are applied only once, whereas object guides require finding and applying these values for every object individually, looping through the selection.
+
+if ((selectionBounds == true) && (selection != null && selection.length() > 1)) {
+	createAxisArrays();
+}
+else if (selection != null && selection.length() >= 1) {
+	for (var i=0; i<selection.length(); i++) {
+		var rect = selection[i].absoluteRect();
+		x1 = rect.x();
+		x2 = rect.x() + rect.width();
+		y1 = rect.y();
+		y2 = rect.y() + rect.height();
+		xMid = rect.x() + rect.width() / 2;
+		yMid = rect.y() + rect.height() / 2; 
+		createAxisArrays();
+	}
+}
+else if (selection == null || selection.length() == 0) {
+
+	var xLength, yLength;
+	if (xIncrement !=0) {xLength = width / xIncrement}
+	else {xLength = -1}
+	if (yIncrement !=0) {yLength = height / yIncrement}
+	else {yLength = -1}
+
+	if (artboard == true) {
+		for (var i=0; i<=xLength; i++) {xValues.push(i * xIncrement)}
+		for (var i=0; i<=yLength; i++) {yValues.push(i * yIncrement)}
+	}
+	else if (artboard != true) {
+		for (var i=0; i<=xLength; i++) {xValues.push(xStart + (i * xIncrement))}
+		for (var i=0; i<=yLength; i++) {yValues.push(yStart + (i * yIncrement))}
+	}
+}
+
+// Sort and remove duplicates ++++++++++++
+// Essential for object-based guides (w_aligned objects)
+
+if (xValues.length > 1) {
+	xValues.sort();
+	for (var i=1; i<xValues.length; i++) {
+		if (xValues[i] === xValues[i - 1]) {
+			xValues.splice(i--, 1);
+		}
+	}
+}
+if (yValues.length > 1) {
+	yValues.sort();
+	for (var i=1; i<yValues.length; i++) {
+		if (yValues[i] === yValues[i - 1]) {
+			yValues.splice(i--, 1);
+		}
+	}
+}
+
+// Add guides ++++++++++++++
+
+var xRuler = context.horizontalRulerData();
+var yRuler = context.verticalRulerData();
+
+if (xValues.length > 0) {
+	for (var i=0; i<xValues.length; i++) {
+		xRuler.addGuideWithValue(xValues[i]);
+	}
+}
+if (yValues.length > 0) {
+	for (var i=0; i<yValues.length; i++) {
+		yRuler.addGuideWithValue(yValues[i]);
+	}
+}
+
+
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

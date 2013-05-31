@@ -1,0 +1,142 @@
+// Match Size
+// v.03b
+// This command resizes selected layers or groups to match a key object within the selection. The key object is designated by its position in the selection's layer stack, from the bottom upwards: 1, 2, 3, etc. (If no object is specified, the bottom layer in the selection becomes the key object.) To match width or height only, add W or H to the input.
+// This script is ideal for a series of similar items such as inserted bitmaps. Once the first bitmap has been resized, the remaining bitmaps can be sized very quickly. Note, however, that a bitmap's original proportions will typically be maintained when resizing. In such cases, add W or H to specify which dimension you wish to match.
+// By default, this command also matches rotation. This can be disabled by holding the Option key when choosing the command, or by changing a preference within the script.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+
+// USER VARIABLES
+// When a text object is matched, the resulting frame is often too large or too small for the text, and in some cases, the command will appear to have had no effect. As an alternative to this, the font size of the text can be adjusted to match the height of the key object, by setting ‘matchFontSize’ to true.
+
+var rotate = true;				// To match rotation, set to true
+var matchFontSize = true;		// For text objects
+var tooltip = true;
+
+// SCRIPT STARTS HERE
+
+if (selection != null && selection.length() >=2) {
+
+	// Modifier keys +++++++++++++++
+	// Option: Rotation
+	var modFlagOption  = Math.pow(2,19);
+	var modFlags = [NSEvent modifierFlags];
+	var modifier;
+	if (modFlags & modFlagOption) {
+		modifier = "opt"; rotate = !rotate;
+		}
+
+	// Parsing input ++++++++++++++++++
+	var nonTextObjects = new Array();
+	for (var i=0; i<selection.length(); i++) {
+		if (selection[i].className() != "MSTextLayer") {
+			nonTextObjects.push(selection[i]);
+		}
+	}
+	if (nonTextObjects.length == 0 && matchFontSize == true) {
+		var input = [doc askForUserInput:"Specify layer number." initialValue:"1"]
+	}
+	else {
+		var input = [doc askForUserInput:"Specify layer number. Add W or H to limit (optional)." initialValue:"1"]
+	}
+	// Test first and last character (isNaN = letter) and slice string
+	var letter, number;
+	if (isNaN(input.charAt(0)) == true) {
+		letter = input.slice(0,1).toUpperCase(); // 1st character
+		number = input.slice(1); // remaining characters
+		}
+	else if (isNaN(input.charAt(input.length()-1)) == true) {
+		letter = input.slice(-1).toUpperCase(); // last character
+		number = input.slice(0, input.length()-1); // remaining characters
+		}
+	else {
+		number = input;
+	}
+	// Align: Compare to array, set to H as default backup
+	//var dimension = letter.toUpperCase();
+	//var dimensionValues = new Array('W','H');
+	//if (dimensionValues.indexOf(align) == -1) {dimension = "W";}
+
+	// Key object: Fix index #, set to 0 as backup (for NaN or 0 input)
+	var keyIndex = number - 1;
+	if (isNaN(keyIndex) == true || keyIndex < 0) {keyIndex = 0;}
+	else if (keyIndex > selection.length()-1) {keyIndex = selection.length()-1;}
+	var keyObj = selection[keyIndex];
+
+	// Find dimensions +++++++++++++
+	//var keyObj = selection[keyIndex];
+	var keyWidth = selection[keyIndex].frame().width();
+	var keyHeight = selection[keyIndex].frame().height();
+	var keyDeg = selection[keyIndex].rotation();
+
+	// Set dimensions +++++++++++++++++++
+	for (var i=0; i<selection.length(); i++) {
+		if (selection[i] == keyObj) continue; // avoid resizing target
+		
+		// Text frames do not affect text size; adjust font size instead
+		if (selection[i].className() == "MSTextLayer" & matchFontSize == true) {
+			if (keyObj.className() == "MSTextLayer") {
+				selection[i].setFontSize(keyObj.fontSize());
+			}
+			else {
+				selection[i].setFontSize(keyHeight);
+			}
+		}
+		// For all other objects
+		else {
+			if (letter == null || letter !="H") {
+				selection[i].frame().setWidth(keyWidth);
+			}
+			if (letter == null || letter !="W") {
+				selection[i].frame().setHeight(keyHeight);
+			}
+		}
+	}
+
+	// Check angles ++++++++++
+	var angles = new Array();
+	for (var i=0; i<selection.length(); i++) {
+		var deg = selection[i].rotation();
+		if (deg != keyDeg) {
+			angles.push(deg);
+		}
+	}
+
+	// Match rotation ++++++++++
+	if (rotate == true) {
+		for (var i=0; i<selection.length(); i++) {
+			if (selection[i] == keyObj) continue;
+			selection[i].setRotation(keyDeg);
+		}
+	}
+
+	// Tooltips +++++
+	if (tooltip == true && modifier == undefined && angles.length > 0)  {
+		if (rotate == true) {
+			doc.showMessage("To disable rotation, hold Option key.");
+		}
+		else {
+			doc.showMessage("Add Option key to match rotation.");
+		}
+	}
+
+} // end (if selection.length() >=2)
+
+else if (selection != null && selection.length() > 0 && selection[0].className() == "MSSliceLayer") {}
+
+else {
+	doc.showMessage("Select 2 or more objects, one at the desired size.");
+	}
+
+
+
+/*
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

@@ -1,0 +1,99 @@
+// Draw Guides at 0,0
+// v.02
+// This command draws guides at the 0,0 point referenced by frame, GKRect, and absoluteRect properties. Visualizing these coordinates on the canvas may be helpful when developing and testing certain scripts. On artboards, frame and ruler coordinates match, so the command is not needed.
+// An option to draw guides at the ruler's 0,0 point is also included for comparison purposes and can be accessed by holding the Option key while running the command (or it can be made the default setting). Holding the Command key will allow you to draw guides at both origin points simultaneously.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+// USER VARIABLES
+// To draw guides at the ruler's X/Y origin on a default basis, set ‘ruler’ to true; otherwise, hold the Option or Command keys to access these coordinates. (Whichever setting is chosen, you may continue to draw guides at the opposing set of 0,0 coordinates by holding the Option key when you run the command.)
+
+var ruler = false;   		// Draw guides at the ruler's 0,0 coordinates
+var labelGuides = true; 	// Add labels to origin points
+var tooltip = true;
+
+// SCRIPT STARTS HERE
+
+// Modifier keys +++++++++++++++
+// Option = Draw guides at alternate 0,0 coordinates
+// Command = Draw guides at both 0,0 coordinates
+
+var modFlagOption  = Math.pow(2,19);
+var modFlagCommand = Math.pow(2,20);
+var modFlags = [NSEvent modifierFlags];
+
+var modifier;
+if (modFlags & modFlagOption) {ruler = !ruler; modifier = "opt"}
+var both = false;
+if (modFlags & modFlagCommand) {both = true; modifier = "cmd"}
+
+// Label styling
+
+function setLabelPositionAndStyle(label) {
+	label.frame().addX(7);
+	label.frame().addY(3);
+	label.setFontSize(14);
+	label.setFontPostscriptName("Helvetica");
+	label.style().contextSettings().setOpacity(.25);
+	label.setIsLocked(true);
+}
+
+if (doc.currentPage().currentArtboard() == null) {
+
+	// Create guides at GKRect origin
+
+	if (ruler == false || both == true) {
+		var frameOrigin = doc.currentPage().addLayerOfType("text");
+		var x = frameOrigin.absoluteRect().rulerX();
+		var y = frameOrigin.absoluteRect().rulerY();
+		doc.currentPage().horizontalRulerData().addGuideWithValue(x);
+		doc.currentPage().verticalRulerData().addGuideWithValue(y);
+		if (labelGuides == false) {
+			doc.currentPage().removeLayer(frameOrigin);
+		}
+		else {
+			frameOrigin.setName("Frame 0,0");
+			frameOrigin.setStringValue("Frame 0,0");
+			setLabelPositionAndStyle(frameOrigin);
+		}
+	}
+	
+	// Create guides at Ruler origin
+
+	if (ruler == true || both == true) {
+		doc.currentPage().horizontalRulerData().addGuideWithValue(0);
+		doc.currentPage().verticalRulerData().addGuideWithValue(0);
+		if (labelGuides == true) {
+			var rulerLabel = doc.currentPage().addLayerOfType("text");
+			rulerLabel.setName("Ruler 0,0");
+			rulerLabel.setStringValue("Ruler 0,0");
+			rulerLabel.absoluteRect().setRulerX(0);
+			rulerLabel.absoluteRect().setRulerY(0);
+			setLabelPositionAndStyle(rulerLabel);
+		}
+	}
+
+	// Tooltip +++++
+	if (tooltip == true && modifier == undefined && ruler == false) {
+		doc.showMessage("Option (⌥): Ruler 0,0     Command (⌘): Both origins");
+	}
+	else if (tooltip == true && modifier == undefined && ruler == true) {
+		doc.showMessage("Option (⌥): Frame 0,0     Command (⌘): Both origins")
+	}
+
+}
+
+else {
+	doc.showMessage("On an artboard, frame and ruler origin points are identical (0,0).");
+}
+
+
+
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

@@ -1,0 +1,48 @@
+// Blend - Backward (cmd shift <)
+// v.01c
+// This command cycles backward through blending options for a selection and displays the current blend mode(s) within the mini-toolbar. Paired with a keyboard shortcut, the command makes quick work of trying out various blend modes for an object or group. An option to include blend modes specified within the API (but not within the interface) is available but is disabled by default.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+
+// USER VARIABLES
+// To cycle through all available blend modes, including hidden ones, set ‘hiddenModes’ to true. Otherwise, leave this set to false.
+
+var hiddenModes = false;
+var tooltip = true;
+
+// SCRIPT STARTS HERE
+
+if (selection != null && selection[0].className() != "MSSliceLayer") {
+
+	var blendLimit;
+	if (hiddenModes == true) {blendLimit = 22;}
+	else {blendLimit = 15;}
+	
+	var blendNames = new Array("Normal", "Darken", "Multiply", "Color Burn", "Lighten", "Screen", "Color Dodge", "Overlay", "Soft Light", "Hard Light", "Difference", "Exclusion", "Hue", "Saturation", "Color", "Luminosity", "Source In", "Source Out", "Source Atop", "Destination Over", "Destination In", "Destination Out", "Destination Atop");
+
+	for (var i=0; i<selection.length(); i++) {
+		var prevBlend = selection[i].style().contextSettings().blendMode() - 1;
+		if (prevBlend < 0) {prevBlend = blendLimit}
+		selection[i].style().contextSettings().setBlendMode(prevBlend);
+	}
+	if (tooltip == true) {
+		var appliedBlends = new Array();
+		for (var i=0; i<selection.length(); i++) {
+			var layerBlend = selection[i].style().contextSettings().blendMode();
+			appliedBlends.push(blendNames[layerBlend]);
+		}
+		function onlyUnique(value, index, self) {
+			return self.indexOf(value) === index;
+		}
+		var uniqueBlends = appliedBlends.filter(onlyUnique);
+		doc.showMessage(uniqueBlends.toString().replace(/,/g, " + "));
+	}
+}
+
+// NOTES
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

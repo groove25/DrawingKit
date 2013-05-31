@@ -1,0 +1,184 @@
+// Blend - Mask, a.k.a. Mask with Underlying Layers
+// v.03g
+// This command offers a quick way to mask a single object (or selection of objects) with underlying layers. Unlike Sketch's vector masking tools, any outside borders and effects are included in the mask.
+// To constrain the mask, hold the Shift key while running the command; this applies a mask blend to the parent group—if one exists—limiting the scope of the effect to the group rather than all underlying layers. (A side effect of this technique is that the group itself may appear clipped. Sorry! It's an imperfect system.)
+// Note that this masking effect may temporarily disable the blend mode menu for any object to which its applied; running the command a second time will turn off the effect and restore any disabled blend mode options. (The Blend - Forward and Blend - Backward commands may also be used to access these blend modes.)
+
+// NEW: Hold the Option key to apply a "Reverse Mask" (a.k.a. silhouette) effect! Overlapping portions of the selected object(s) knock out the underlying layers, while outlying portions are preserved. Be warned that strokes (and other effects) may render oddly when using this setting.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+// USER VARIABLES
+
+var tooltip = true;
+var label = true;
+
+// SCRIPT STARTS HERE
+
+// Modifier keys ++++++++++++++++++
+
+var modFlagOption = Math.pow(2,19);
+var modFlagShift  = Math.pow(2,17);
+var modFlags = [NSEvent modifierFlags];
+var modifier, constrain, reverse;
+if (modFlags & modFlagOption) {reverse = true; modifier = "opt"}
+if (modFlags & modFlagShift) {constrain = true; modifier = "shift"}
+
+// Labels +++++++++++++++++++++++++++
+// Labels help to affirm that an effect has been applied when the results on canvas are nonexistent or unexpected, to identify an effect when revisiting a document, and to preserve non-constraining masks applied to groups.
+// KO = Knockout, TKO = Transparency Knockout, M = Mask, C = Constrain (w/mask), RM = Reverse mask // Unicode characters: ⬚ dotted square, ▣ white square containing small black square, ◉ fisheye, ￭ halfwidth black square
+
+var KO = " - KO";
+var TKO = " - TKO";
+var M = " - M";
+var C = " *";
+var RM = " - RM";
+
+var symbols = new Array(KO, TKO, M, C, RM);
+var effects = new Array(KO, TKO, M, RM);
+
+// Toggle mask &/or constraint ++++++++++++++++++++++++++++
+
+if (selection != null && selection.length() > 0 && selection[0].className() != "MSSliceLayer") {
+
+for (var i=0; i<selection.length(); i++) {
+
+	var currentBlend = selection[i].style().contextSettings().blendMode();
+	var parent = selection[i].parentGroup();
+	var parentBlend = parent.style().contextSettings().blendMode();
+
+	// Remove labels +++++++++++++++++++
+
+	if (label == true) {
+		var name = selection[i].name();
+		var parentName = parent.name();
+
+		if (selection[i].className() != "MSArtboardGroup") {
+			for (var j=0; j<symbols.length; j++) {
+				var suffixIndex = name.lastIndexOf(symbols[j]);
+				if (suffixIndex > -1 
+				&& suffixIndex == name.length() - symbols[j].length) {
+					selection[i].setName(name.slice(0, suffixIndex))
+				}
+			}
+		}
+		if (parent.className() == "MSLayerGroup") {
+			// If found, remove constrain symbol (*) from parent
+			var parentSuffixIndexC = parentName.lastIndexOf(C);
+			if (parentSuffixIndexC > -1 
+				&& parentSuffixIndexC == parentName.length() - C.length) {
+				parent.setName(parentName.slice(0, parentSuffixIndexC))
+			}
+			// Or if constrain is true, remove effect symbol from parent
+			else if (constrain == true) { 
+				for (var k=0; k<effects.length; k++) {
+					var parentSuffixIndex = parentName.lastIndexOf(effects[k]);
+					if (parentSuffixIndex > -1 && parentSuffixIndex == parentName.length() - effects[k].length) {
+						parent.setName(parentName.slice(0, parentSuffixIndex))
+					}
+				}
+			}
+		}
+	}
+
+	// Set blends ++++++++++++++++++++
+
+	// 18 = Source Atop ("mask" or "constrain")
+	// 17 = Source Out ("reverse mask" a.k.a. "silhouette" or "difference")
+
+	if (selection[i].className() != "MSArtboardGroup") {
+		if (reverse == true) {
+			selection[i].style().contextSettings().setBlendMode(17);
+		}
+		else if ((currentBlend == 18 || currentBlend == 17) 
+	&& constrain != true) {
+			selection[i].style().contextSettings().setBlendMode(0);
+		}
+		else {
+			selection[i].style().contextSettings().setBlendMode(18);
+		}
+	}
+
+	if (parent.className() == "MSLayerGroup") {
+		if (constrain == true) {
+			parent.style().contextSettings().setBlendMode(18);
+		}
+		else if (parentBlend == 18) {
+			parent.style().contextSettings().setBlendMode(0)
+		}
+		// If label ends in the mask symbol, reset mask blend mode
+		if (label == true && parent.name().lastIndexOf(M) > -1 
+		&& parent.name().lastIndexOf(M) == parent.name().length() - M.length) {
+			parent.style().contextSettings().setBlendMode(18);
+		}
+	}
+
+	// Add labels +++++++++++++++++++++++++++
+
+	if (label == true) {
+
+		if (selection[i].className() != "MSArtboardGroup") {
+			var newBlend = selection[i].style().contextSettings().blendMode();
+			if (newBlend == 17) {selection[i].setName(selection[i].name() + RM)}
+			else if (newBlend == 18) {selection[i].setName(selection[i].name() + M)}
+		}
+
+		if (parent.className() == "MSLayerGroup") {
+			var newParentBlend = parent.style().contextSettings().blendMode();
+			// lastIndexOf(C) is necessary for looped selection
+			// lastIndexOf(M) prevents "*" being added to "M"
+			if (newParentBlend == 18 
+					&& parent.name().lastIndexOf(M) == -1
+					&& parent.name().lastIndexOf(C) == -1) {
+				parent.setName(parent.name() + C);
+			}
+		}
+	}
+	
+}
+
+// Tooltips & messages +++++++++++++++++
+
+// Do not show tooltip if mask has just been toggled off.
+function testForMask() {
+	for (var i=0; i<selection.length(); i++) {
+		if (selection[i].style().contextSettings().blendMode() == 18) {
+			return true
+		}
+	}
+}
+if (tooltip == true && modifier == undefined && testForMask() == true) {
+	doc.showMessage("Shift (⇧): Constrain to Group    Option (⌥): Reverse Mask");
+}
+
+// If constrain was chosen but no parent group exists, let them know.
+function testForGroup() {
+	for (var i=0; i<selection.length(); i++) {
+		if (selection[i].parentGroup().className() == "MSLayerGroup") {
+			return true
+		}
+	}
+}
+if (constrain == true && testForGroup() != true) {
+	doc.showMessage("To constrain this mask, you must create a group.");
+}
+
+
+} // end "if selection" criteria ++++++++++++++++++
+
+else if (selection != null && selection.length() > 0 && selection[0].className() == "MSSliceLayer") {
+	//doc.showMessage("This effect does not apply to slices.");
+}
+
+else {
+	doc.showMessage("This command requires a selection.");
+}
+
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

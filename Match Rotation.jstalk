@@ -1,0 +1,127 @@
+// Match Rotation
+// v.01
+// This is a simple command that allows one to either match the rotation of a key object within a selection or specify an angle to be applied to all objects. It is essentially a companion to the Match Size command, which includes a rotation option, but not as a standalone feature.
+// Hold the Option key to view the exact angle of the suggested key object, or to view/set the angle for a single selected object. Hold the Shift key to add or subtract from all angles at once.
+// Future versions may include an incremental or progressive rotation option.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+// USER VARIABLES
+// If you prefer to view the angle of a suggested key object, rather than its layer number, set ‘showAngle’ to true. This option also allows you to view and set the angle for a single selected object, as a value up to 14 decimal places.
+
+var buffer = 1; 			// For overshooting key object selection
+var showAngle = false;		// Show angle for suggested key object
+var tooltip = true;
+
+// SCRIPT STARTS HERE
+
+// Modifier keys +++++++++++++++
+// Option: View rotation angle
+// Shift: Adjust by increment (+/-)
+var modFlagOption  = Math.pow(2,19);
+var modFlagShift   = Math.pow(2,17);
+var modFlags = [NSEvent modifierFlags];
+var modifier, increment;
+if (modFlags & modFlagOption) {modifier = "opt"; showAngle = !showAngle;}
+if (modFlags & modFlagShift) {modifier = "shift"; increment = true;}
+
+if (selection != null && selection.length() == 1) {
+
+	if (increment == true) {
+		var input = [doc askForUserInput:"Adjust the angle of rotation (+/-)" initialValue: "10°"]
+		if (input != null) {input = parseFloat(input);}
+		var angle = selection[0].rotation();
+		selection[0].setRotation(angle + input);
+	}
+	else if (showAngle == true) {
+		var angle = selection[0].rotation();
+		var input = [doc askForUserInput:"Set the angle of rotation (e.g., 45deg)" initialValue: angle.toString() + "°"]
+		if (input != null) {input = parseFloat(input);}
+		else {input = angle}
+		selection[0].setRotation(input);
+		doc.showMessage(selection[0].rotation() +"°");
+	}
+}
+
+else if (selection != null && selection.length() >=2) {
+
+	if (increment == true) {
+		var input = [doc askForUserInput:"Enter rotation increment (+/-)" initialValue: "10°"]
+		if (input != null) {input = parseFloat(input);}
+		for (var i=0; i<selection.length(); i++) {
+			var angle = selection[i].rotation();
+			selection[i].setRotation(angle + input);
+		}
+	}
+
+	else {
+
+	// Suggested key object ++++++++++++++
+	function firstNonZeroObject() {
+		for (var i=0; i<selection.length(); i++) {
+			var deg = selection[i].rotation();
+			if (deg != 0) {return i}
+		}
+	}
+	var suggestedIndex;
+	if (firstNonZeroObject() == null) {suggestedIndex = 1;}
+	else {suggestedIndex = firstNonZeroObject() + 1;}
+	if (showAngle == true) {suggestedValue = selection[suggestedIndex-1].rotation() + "°";}
+	else {suggestedValue = suggestedIndex;}
+	
+	// Parsing input ++++++++++++++++++
+	var input = [doc askForUserInput:"Specify layer number or angle (e.g., 45deg)" initialValue: suggestedValue.toString()]
+
+	if (input.indexOf("deg") < 0 && input > 0 && input <= selection.length() + buffer) {
+
+		// Key object + rotation ++++++++++++++
+		var keyIndex;
+		if (input == 0 || input < 0) {keyIndex = 0}
+		else if (input > selection.length()) {keyIndex = selection.length() - 1}
+		else {keyIndex = input - 1}
+		var keyObj = selection[keyIndex];
+		var keyDeg = selection[keyIndex].rotation();
+
+		// Match rotation ++++++++++
+		for (var i=0; i<selection.length(); i++) {
+			if (selection[i] == keyObj) continue;
+			selection[i].setRotation(keyDeg);
+		}
+	}
+	
+	else {
+		// Set rotation by angle ++++++++++
+		var angle = parseFloat(input);
+		for (var i=0; i<selection.length(); i++) {
+			selection[i].setRotation(angle);
+		}
+	}
+	
+	if (modifier == "opt" && showAngle == true) {
+		doc.showMessage(selection[0].rotation() +"°");
+	}
+	
+	else if (tooltip == true && modifier == undefined && showAngle == false) {
+		doc.showMessage("Option: View angle (°)     Shift: Add/subtract (+/-)");
+	}
+
+	} // end else ++++++++++++++++++++
+
+
+} // end (if selection.length() >=2)
+
+
+else if (selection != null && selection.length() > 0 && selection[0].className() == "MSSliceLayer") {}
+
+else {
+	doc.showMessage("Select 2 or more objects, one at the desired rotation.");
+	}
+
+
+// NOTES
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

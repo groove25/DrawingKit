@@ -1,0 +1,108 @@
+// Clear Guides
+// v.02b
+// This command quickly and easily removes the guides from the currently active artboard or page, leaving guides on other artboards or pages untouched. To remove guides from the X or Y axis only, hold the Option key or Option-Shift keys, respectively, while running the command. To clear guides across all artboards on the current page, hold the Command key.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+
+// USER VARIABLES
+
+var tooltip = true;  // To turn off tooltips, set this to false
+
+// SCRIPT STARTS HERE
+
+// Find context ++++++++++++
+
+var context;
+if (doc.currentPage().currentArtboard() != null) {
+	context = doc.currentPage().currentArtboard();
+	}
+else {
+	context = doc.currentPage();
+}
+
+// Modifier keys +++++++++++++++
+// Option = x, Option-Shift = y
+// Cmd = all guides (canvas + artboards)
+
+var modFlagShift   = Math.pow(2,17);
+var modFlagOption  = Math.pow(2,19);
+var modFlagCommand = Math.pow(2,20);
+var modFlags = [NSEvent modifierFlags];
+
+var modifier;
+if ((modFlags & modFlagOption) && !(modFlags & modFlagShift)) {modifier = "opt"}
+if ((modFlags & modFlagOption) && (modFlags & modFlagShift)) {modifier = "optShift"}
+if (modFlags & modFlagCommand) {modifier = "cmd"}
+
+
+// Tooltip +++++
+if ((tooltip == true) && (modifier == undefined)) {
+	doc.showMessage("X: Option  Y: Shift-Option");
+	//"Option = X-axis,  Shift-Option = Y-axis"
+}
+
+// Add tooltip "No guides to remove in current page" or "No guides to remove in current artboard" or "Please select an artboard or page with guides before running this command."
+// If no Command key held, check for guides in current context.
+/*
+See xGuides and yGuides below. Move these variables up?
+var currentGuides = context.horizontalRulerData();
+*/
+
+// Remove guides ++++++++++++
+
+// Clear all guides (canvas + artboards)
+
+if (modifier == "cmd") {
+	var xGuides = doc.currentPage().horizontalRulerData().numberOfGuides();
+	for (var i=0; i<xGuides; i++) {
+		doc.currentPage().horizontalRulerData().removeGuideAtIndex(0);
+	}
+	var yGuides = doc.currentPage().verticalRulerData().numberOfGuides();
+	for (var i=0; i<yGuides; i++) {
+		doc.currentPage().verticalRulerData().removeGuideAtIndex(0);
+	}
+	var artboards = doc.currentPage().artboards();
+	for (var i=0; i<artboards.length(); i++) {
+		var xGuides = artboards[i].horizontalRulerData().numberOfGuides();
+		for (var x=0; x<xGuides; x++) {
+			artboards[i].horizontalRulerData().removeGuideAtIndex(0);
+		}
+		var yGuides = artboards[i].verticalRulerData().numberOfGuides();
+		for (var y=0; y<yGuides; y++) {
+			artboards[i].verticalRulerData().removeGuideAtIndex(0);
+		}
+	}
+}
+
+// Clear guides on current page or artboard only
+
+else {
+	var xGuides = context.horizontalRulerData().numberOfGuides();
+	var yGuides = context.verticalRulerData().numberOfGuides();
+	if (modifier != "optShift") {
+		for (var i=0; i<xGuides; i++) {
+			context.horizontalRulerData().removeGuideAtIndex(0);
+		}
+	}
+	if (modifier != "opt") {
+		for (var i=0; i<yGuides; i++) {
+			context.verticalRulerData().removeGuideAtIndex(0);
+		}
+	}
+	// Rather than this tooltip, I might simply like to prevent the modifier tooltip.
+	if ((tooltip == true) && (xGuides == 0 && yGuides == 0)) {
+	doc.showMessage("Select a page or artboard with guides, or hold Command (⌘) key to clear all guides.");
+	// Please select an artboard or page with guides.
+	}
+}
+
+
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

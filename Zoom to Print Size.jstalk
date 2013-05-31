@@ -1,0 +1,100 @@
+// Zoom to Print Size
+// This command was created for use with print-based artboards in Sketch, which by default assume a pixel density of 72ppi (for PDF sizing purposes) and therefore appear quite small on most monitors. To preview artboards at their actual output size, you can use zoom. To obtain the correct zoom setting, enter your display's pixel density in the User Variables section below. (This value will be divided by 72ppi to determine/set the correct zoom percentage.)
+// A list of displays by their pixel density can be found on Wikipedia: http://en.wikipedia.org/wiki/List_of_displays_by_pixel_density#Apple_Inc.
+// If you prefer to create documents at a custom print resolution (e.g., 300ppi), you can enter that resolution below. Alternatively, you may hold the Option key when choosing this command to enter a custom resolution "on the fly".
+
+// For best results, view your document in Vector mode (View > Hide Pixels).
+// NOTE: Zoom will not render vectors and text as cleanly as they will be printed. Text rendering in particular will not appear accurate at zoom levels other than 100%; if this is a concern, instead of zoom, you may wish to create custom artboards based on your monitor's pixel density—for example, 8.5"x11" @ 112ppi = 952px x 1232px.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+
+// USER VARIABLES
+
+var monitor = 112;		// Enter your monitor's pixel density (ppi) here
+var print = 72; 		// Leave this at 72, or enter custom print ppi setting
+var center = true;		// To disable centering, set to false
+
+// If you prefer to set zoom manually, you can do so here. Set "override" to true and then enter your preferred zoom value. (This zoom value will be ignored if "override" is set to false.)
+
+var override = false;
+var zoom = 180;
+
+// SCRIPT STARTS HERE
+
+// Modifier key: Option
+var modFlagOption  = Math.pow(2,19);
+var modFlags = [NSEvent modifierFlags];
+var userInput;
+if (modFlags & modFlagOption) {userInput = true}
+
+if (userInput == true) {
+	print = doc.askForUserInput_initialValue("Enter custom PPI for print output.", print.toString());
+	print = print.replace(/[^\d.-]/g, '');// removes non-numeric, retains floats
+	zoom = monitor / print;
+	}
+else if (override == true) {
+	zoom = zoom * .01;
+	}
+else {zoom = monitor / print;}
+
+doc.setZoomValue(zoom);
+
+// Centering - from "Zoom to Percent"
+
+if (center == true) {
+	var context;
+	if (selection != null && selection.length() >= 1) {
+		var x1, y1, width, height;
+		if (selection.length() == 1) {
+			x1 = selection[0].absoluteRect().x();
+			y1 = selection[0].absoluteRect().y();
+			width = selection[0].absoluteRect().width();
+			height = selection[0].absoluteRect().height();
+		}
+		else {
+			var minXs = new Array(); 
+			var maxXs = new Array();
+			var minYs = new Array();
+			var maxYs = new Array();
+			for (var i=0; i<selection.length(); i++) {
+				var rect = selection[i].absoluteRect();
+				minXs.push(rect.x());
+				maxXs.push(rect.x() + rect.width());
+				minYs.push(rect.y());
+				maxYs.push(rect.y() + rect.height());
+			}	
+			x1 = Math.min.apply(Math, minXs);
+			var x2 = Math.max.apply(Math, maxXs);
+			y1 = Math.min.apply(Math, minYs);
+			var y2 = Math.max.apply(Math, maxYs);
+			width = x2 - x1;
+			height = y2 - y1;
+		}
+		context = doc.currentPage().frame().GKRect().copy();
+		context.setX(x1);
+		context.setY(y1);
+		context.setWidth(width);
+		context.setHeight(height);
+	}
+	else if (doc.currentPage().currentArtboard() != null) {
+		context = doc.currentPage().currentArtboard().frame().GKRect();
+	}
+	else {
+		context = doc.currentPage().contentBounds();
+	}
+	doc.currentView().centerRect(context);
+}
+
+if (override != true) {
+	doc.showMessage(print + "ppi");
+}
+
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

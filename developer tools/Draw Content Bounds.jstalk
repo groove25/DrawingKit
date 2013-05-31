@@ -1,0 +1,120 @@
+// Draw Content Bounds
+// v.02
+// This command allows you to visualize the contentBounds() property for the current page by adding a rectangle to the canvas. Holding the Option key will allow you to view the page's frame as well. If you prefer, you can also draw guides to represent these properties by holding the Shift key, or by setting a preference within the script.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+
+// USER VARIABLES
+
+var labels = true;		// Add labels to rectangles or guides
+var guides = false;		// Draw guides to represent bounds
+var pageFrame = false;	// View page.frame()
+var tooltip = true;
+
+// SCRIPT STARTS HERE
+
+// Modifier keys +++++++++++++++
+// Option = page.frame(), Shift = guides
+
+var modFlagShift   = Math.pow(2,17);
+var modFlagOption  = Math.pow(2,19);
+var modFlags = [NSEvent modifierFlags];
+
+var modifier;
+if (modFlags & modFlagOption) {modifier = "opt"; pageFrame = !pageFrame;}
+if (modFlags & modFlagShift) {modifier = "shift"; guides = !guides;}
+
+// Tooltip +++++
+if ((tooltip == true) && (modifier == undefined)) {
+	doc.showMessage("Option (⌥): Add Page Frame     Shift (⇧): Add Guides");
+}
+
+// Find dimensions
+
+var x = doc.currentPage().contentBounds().x();
+var y = doc.currentPage().contentBounds().y();
+var w = doc.currentPage().contentBounds().width();
+var h = doc.currentPage().contentBounds().height();
+var pageW = doc.currentPage().frame().width();
+var pageH = doc.currentPage().frame().height();
+var pageX = doc.currentPage().frame().x();
+var pageY = doc.currentPage().frame().y();
+
+// Label styling
+
+function setLabelPositionAndStyle(label) {
+	label.frame().addX(7);
+	label.frame().addY(3);
+	label.setFontSize(14);
+	label.setFontPostscriptName("Helvetica");
+	label.style().contextSettings().setOpacity(.25);
+	label.setIsLocked(true);
+}
+
+// Draw page frame
+
+if (pageFrame == true) {
+	var page = doc.currentPage().addLayerOfType("rectangle");
+	page.frame().setX(pageX);
+	page.frame().setY(pageY);
+	page.frame().setWidth(pageW);
+	page.frame().setHeight(pageH);
+	page.style().contextSettings().setOpacity(.3);
+	page.setName("page.frame()");
+	page.setIsLocked(true);
+	
+	if (guides == true) {
+		var xRule = page.absoluteRect().rulerX();
+		var yRule = page.absoluteRect().rulerY();
+		doc.currentPage().horizontalRulerData().addGuideWithValue(xRule);
+		doc.currentPage().horizontalRulerData().addGuideWithValue(xRule+pageW);
+		doc.currentPage().verticalRulerData().addGuideWithValue(yRule);
+		doc.currentPage().verticalRulerData().addGuideWithValue(yRule+pageH);
+	}
+	if (labels == true) {
+		var label = doc.currentPage().addLayerOfType("text");
+		label.setStringValue("page.frame()");
+		label.frame().setX(pageX);
+		label.frame().setY(pageY);
+		label.setName("label: page");
+		setLabelPositionAndStyle(label);
+	}
+}
+
+// Draw content bounds
+
+var bounds = doc.currentPage().addLayerOfType("rectangle");
+bounds.frame().setX(x);
+bounds.frame().setY(y);
+bounds.frame().setWidth(w);
+bounds.frame().setHeight(h);
+bounds.style().contextSettings().setOpacity(.5);
+bounds.setName("contentBounds()");
+bounds.setIsLocked(true);
+
+if (guides == true) {
+	var xRule = bounds.absoluteRect().rulerX();
+	var yRule = bounds.absoluteRect().rulerY();
+	doc.currentPage().horizontalRulerData().addGuideWithValue(xRule);
+	doc.currentPage().horizontalRulerData().addGuideWithValue(xRule+w);
+	doc.currentPage().verticalRulerData().addGuideWithValue(yRule);
+	doc.currentPage().verticalRulerData().addGuideWithValue(yRule+h);
+}
+if (labels == true) {
+	var label = doc.currentPage().addLayerOfType("text");
+	label.setStringValue("contentBounds()");
+	label.frame().setX(x);
+	label.frame().setY(y);
+	label.setName("label: content");
+	setLabelPositionAndStyle(label);
+}
+
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

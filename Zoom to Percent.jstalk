@@ -1,0 +1,97 @@
+// Zoom to Percent
+// v.05
+// This command allows you to view a document at a custom zoom percentage. If there's a zoom percentage that you use frequently, you may enter its value in the User Variables section and access it by holding the Option key when you run the command. Alternatively, you may disable the user input dialog so that the same zoom setting is applied every time the script is run. (If you disable user input, you may still access the input dialog on an as-needed basis by holding the Option key when running the command.)
+// A centering option is also included and is enabled by default.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: dougdowning.com
+
+
+// USER VARIABLES
+
+var zoom = 150;  		// Enter preferred zoom setting here. (No units!)
+var userInput = true;	// To disable user input, set to false.
+var tooltip = true;		// To disable tooltip, set to false.
+var center = true;		// To disable centering, set to false.
+
+
+// SCRIPT STARTS HERE
+
+// Modifier keys: Option to toggle userInput
+
+var modFlagOption  = Math.pow(2,19);
+var modFlags = [NSEvent modifierFlags];
+var modifier;
+if (modFlags & modFlagOption) {userInput = !userInput; modifier = "opt"}
+
+// Set zoom level
+
+var currentZoom = doc.zoomValue() * 100; // e.g., 0.8 = 80% zoom
+
+if (userInput == true) {
+	zoom = doc.askForUserInput_initialValue("Enter custom zoom value", currentZoom.toString());
+	zoom = zoom.replace(/[^\d.-]/g, ''); // removes non-numeric, retains floats
+	}
+
+doc.setZoomValue(zoom * .01);
+
+// Centering
+
+if (center == true) {
+	var context;
+	if (selection != null && selection.length() >= 1) {
+		var x1, y1, width, height;
+		if (selection.length() == 1) {
+			x1 = selection[0].absoluteRect().x();
+			y1 = selection[0].absoluteRect().y();
+			width = selection[0].absoluteRect().width();
+			height = selection[0].absoluteRect().height();
+		}
+		else {
+			var minXs = new Array(); 
+			var maxXs = new Array();
+			var minYs = new Array();
+			var maxYs = new Array();
+			for (var i=0; i<selection.length(); i++) {
+				var rect = selection[i].absoluteRect();
+				minXs.push(rect.x());
+				maxXs.push(rect.x() + rect.width());
+				minYs.push(rect.y());
+				maxYs.push(rect.y() + rect.height());
+			}	
+			x1 = Math.min.apply(Math, minXs);
+			var x2 = Math.max.apply(Math, maxXs);
+			y1 = Math.min.apply(Math, minYs);
+			var y2 = Math.max.apply(Math, maxYs);
+			width = x2 - x1;
+			height = y2 - y1;
+		}
+		context = doc.currentPage().frame().GKRect().copy();
+		context.setX(x1);
+		context.setY(y1);
+		context.setWidth(width);
+		context.setHeight(height);
+	}
+	else if (doc.currentPage().currentArtboard() != null) {
+		context = doc.currentPage().currentArtboard().frame().GKRect();
+	}
+	else {
+		context = doc.currentPage().contentBounds();
+	}
+	doc.currentView().centerRect(context);
+}
+
+// Tooltip
+
+if ((tooltip == true) && (userInput == false) && (modifier == undefined)) {
+	doc.showMessage("Add Option key to enter a custom zoom percentage.");
+}
+
+
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

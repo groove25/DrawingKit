@@ -1,0 +1,132 @@
+// Artboard Bleed
+// v.02
+// This command allows you to add bleed to an existing artboard and its contents, without having to manually adjust the artboard size, reposition objects and guides, and so on. By default, it adds guides to indicate the bleed lines, but this aspect can be disabled by holding the Option key when running the command, or by altering a preference within the script.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+// USER VARIABLES
+
+var bleed = 10;		// Enter preferred bleed setting here
+var guides = true;	// To disable guides, set to false
+var tooltip = true;
+
+// SCRIPT STARTS HERE
+
+// Modifier key: Option ++++++++++++++++++
+
+var modFlagOption = Math.pow(2,19);
+var modFlags = [NSEvent modifierFlags];
+var modifier;
+if (modFlags & modFlagOption) {guides = !guides; modifier = "opt"}
+
+if (doc.currentPage().currentArtboard() != null) {
+
+	var artboard = doc.currentPage().currentArtboard();
+	
+	// Parsing input: TRBL, TB-RL, T-RL-B, T-R-B-L
+	
+	bleed = doc.askForUserInput_initialValue("Enter up to 4 values (top, right, bottom, left):", bleed.toString());
+
+	var parsedInput = bleed.split(",", 4);
+	var top, right, bottom, left;
+	if (parsedInput.length == 4) {
+		top = parsedInput[0].replace(/[^\d.-]/g, '');
+		right = parsedInput[1].replace(/[^\d.-]/g, '');
+		bottom = parsedInput[2].replace(/[^\d.-]/g, '');
+		left = parsedInput[3].replace(/[^\d.-]/g, '');
+	}
+	else if (parsedInput.length == 3) {
+		top = parsedInput[0].replace(/[^\d.-]/g, '');
+		left = right = parsedInput[1].replace(/[^\d.-]/g, '');
+		bottom = parsedInput[2].replace(/[^\d.-]/g, '');
+	}
+	else if (parsedInput.length == 2) {
+		top = bottom = parsedInput[0].replace(/[^\d.-]/g, '');
+		left = right = parsedInput[1].replace(/[^\d.-]/g, '');
+	}
+	else if (parsedInput.length == 1) {
+		top = bottom = left = right = parsedInput[0].replace(/[^\d.-]/g, '');
+	}
+
+	// Convert strings to floats, for numeric addition
+	top = parseFloat(top);
+	bottom = parseFloat(bottom);
+	left = parseFloat(left);
+	right = parseFloat(right);
+	
+	// Expand artboard
+	
+	var horz = left + right;
+	var vert = top + bottom;
+	artboard.frame().addWidth(horz);
+	artboard.frame().addHeight(vert);
+	
+	// Reposition elements
+	
+	var layers = artboard.layers();
+	for (var i=0; i<layers.length(); i++) {
+		layers[i].frame().addX(left);
+		layers[i].frame().addY(top);
+	}
+	
+	// Reposition existing guides
+	
+	var xGuides = artboard.horizontalRulerData().numberOfGuides();
+	var yGuides = artboard.verticalRulerData().numberOfGuides();
+
+	if (xGuides > 0) {
+		var xValues = new Array();
+		for (var i=0; i<xGuides; i++) {
+			var x = artboard.horizontalRulerData().guideAtIndex(0);
+			artboard.horizontalRulerData().removeGuideAtIndex(0);
+			xValues.push(x + left);
+		}
+		for (var i=0; i<xValues.length; i++) {
+			artboard.horizontalRulerData().addGuideWithValue(xValues[i]);
+		}
+	}
+	if (yGuides > 0) {
+		var yValues = new Array();
+		for (var i=0; i<yGuides; i++) {
+			var y = artboard.verticalRulerData().guideAtIndex(0);
+			artboard.verticalRulerData().removeGuideAtIndex(0);
+			yValues.push(y + top);
+		}
+		for (var i=0; i<yValues.length; i++) {
+			artboard.verticalRulerData().addGuideWithValue(yValues[i]);
+		}
+	}
+	
+	// Add guides
+	
+	var x1, x2, y1, y2;
+	if (guides == true) {
+		x1 = left;
+		x2 = artboard.frame().width() - right;
+		y1 = top;
+		y2 = artboard.frame().height() - bottom;
+		
+		artboard.horizontalRulerData().addGuideWithValue(x1);
+		artboard.horizontalRulerData().addGuideWithValue(x2);
+		artboard.verticalRulerData().addGuideWithValue(y1);
+		artboard.verticalRulerData().addGuideWithValue(y2);
+	}
+	
+	// Tooltip
+	if (tooltip == true && guides == true && modifier == undefined) {
+		doc.showMessage("Option: Guides off");
+	}
+	else if (tooltip == true && guides == false && modifier == undefined) {
+		doc.showMessage("Option: Add guides");
+	}
+
+}
+
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff Inc.) for syntax suggestions and help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

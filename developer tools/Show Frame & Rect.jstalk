@@ -1,0 +1,138 @@
+// Show Frame & Rect
+// This command offers quick access to the position and size of a selection in terms of its frame or GKRect, absoluteRect, and rulerX/Y properties, to increase familiarity with the different position systems used by these properties.
+// There are two presentation styles. Holding the Option key when choosing the script will allow you to view the alternate style. The default preference may be set within the script.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+
+// USER VARIABLES
+// For a consolidated view of X, Y, width and height info, set ‘XYWH’ to true; otherwise, leave set to false. Whichever presentation method you choose, you may access the alternate style by holding the Option key when running the command.
+
+var XYWH = false;
+var round = true;		// Rounding values is recommended
+var decimal = 1; 		// Number of decimal places for rounding (1, 2, 3, etc.)
+
+
+// SCRIPT STARTS HERE
+
+// Modifier keys +++++++++++++++
+var modFlagOption  = Math.pow(2,19);
+var modFlags = [NSEvent modifierFlags];
+
+if (modFlags & modFlagOption) {XYWH = !XYWH;} // set XYWH to opposite
+
+// Find selection bounds (ala artboard)
+
+if (selection != null && selection.length() > 0) {
+
+	if (selection.length() > 1) {
+
+		// frame().GKRect()
+		var minXs = new Array(); 
+		var maxXs = new Array();
+		var minYs = new Array();
+		var maxYs = new Array();
+		for (var i=0; i<selection.length(); i++) {
+			var rect = selection[i].frame();
+			minXs.push(rect.minX());
+			maxXs.push(rect.maxX());
+			minYs.push(rect.minY());
+			maxYs.push(rect.maxY());
+		}
+		var frameX = Math.min.apply(Math, minXs);
+		var x2 = Math.max.apply(Math, maxXs);
+		var frameY = Math.min.apply(Math, minYs);
+		var y2 = Math.max.apply(Math, maxYs);
+		var frameWidth = x2 - frameX;
+		var frameHeight = y2 - frameY;
+
+		// absoluteRect()
+		var absMinXs = new Array(); 
+		var absMaxXs = new Array();
+		var absMinYs = new Array();
+		var absMaxYs = new Array();
+		for (var i=0; i<selection.length(); i++) {
+			var rect = selection[i].absoluteRect();
+			absMinXs.push(rect.minX());
+			absMaxXs.push(rect.maxX());
+			absMinYs.push(rect.minY());
+			absMaxYs.push(rect.maxY());
+		}
+		var absRectX = Math.min.apply(Math, absMinXs);
+		var absRx2 = Math.max.apply(Math, absMaxXs);
+		var absRectY = Math.min.apply(Math, absMinYs);
+		var absRy2 = Math.max.apply(Math, absMaxYs);
+		var absWidth = absRx2 - absRectX;
+		var absHeight = absRy2 - absRectY;
+
+		// Ruler X & Y
+		var absRulerXs = new Array(); 
+		var absRulerYs = new Array();
+		for (var i=0; i<selection.length(); i++) {
+			var rect = selection[i].absoluteRect();
+			absRulerXs.push(rect.rulerX());
+			absRulerYs.push(rect.rulerY());
+		}
+		var rulerX = Math.min.apply(Math, absRulerXs);
+		var rulerY = Math.min.apply(Math, absRulerYs)
+
+	}
+
+	// For individual selections
+	else {
+		var frameX = selection[0].frame().GKRect().x();
+		var frameY = selection[0].frame().GKRect().y();
+		var frameWidth = selection[0].frame().GKRect().width();
+		var frameHeight = selection[0].frame().GKRect().height();
+		var absRectX = selection[0].absoluteRect().x();
+		var absRectY = selection[0].absoluteRect().y();
+		var absWidth = selection[0].absoluteRect().width();
+		var absHeight = selection[0].absoluteRect().height();
+		var rulerX = selection[0].absoluteRect().rulerX();
+		var rulerY = selection[0].absoluteRect().rulerY();
+	}
+
+	// Round all values
+	var f = Math.pow(10,decimal); // e.g. 10, 100, 1000, etc.
+	if (round == true) {
+		var frameX = Math.round(frameX*f)/f;
+		var frameY = Math.round(frameY*f)/f;
+		var frameWidth = Math.round(frameWidth*f)/f;
+		var frameHeight = Math.round(frameHeight*f)/f;
+		var absRectX = Math.round(absRectX*f)/f;
+		var absRectY = Math.round(absRectY*f)/f;
+		var absWidth = Math.round(absWidth*f)/f;
+		var absHeight = Math.round(absHeight*f)/f;
+		var rulerX = Math.round(rulerX*f)/f;
+		var rulerY = Math.round(rulerY*f)/f;
+	}
+
+	if (XYWH == true) {
+		var xInfo = "X: " + frameX + "/" + absRectX + "/" + rulerX;
+		var yInfo = "      Y: " + frameY + "/" + absRectY + "/" + rulerY;
+		var wInfo = "      W: " + frameWidth + "/" + absWidth;
+		var hInfo = "      H: " + frameHeight + "/" + absHeight;
+		doc.showMessage(xInfo + yInfo + wInfo + hInfo);
+	}
+	else {
+		var gkRect = " GKRect ( " + frameX + ", " + frameY + ", " + frameWidth + ", " + frameHeight + " )    ";
+		var absRect;
+		if (frameX == absRectX && frameY == absRectY && frameWidth == absWidth && frameHeight == absHeight) {absRect = "";}
+		else {absRect = "AbsoluteRect ( " + absRectX + ", " + absRectY + ", " + absWidth + ", " + absHeight + " )    ";}
+		var ruler = "Ruler ( " + rulerX + ", " + rulerY + " )";
+		doc.showMessage(gkRect + absRect + ruler);
+	}
+
+}
+
+else {doc.showMessage("Select an object on the canvas to view its position and size.")}
+
+
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

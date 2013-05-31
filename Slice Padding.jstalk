@@ -1,0 +1,62 @@
+// Slice Padding
+// v.01
+// This command applies padding to a selected slice within the Export/Slices panel. To apply padding to all slices on the current page, hold the Option key when running the command.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+
+// USER VARIABLES
+// If there's a padding value that you use frequently, enter it below and it will appear as the suggested value within the User Input dialog. Alternatively, you may disable user input so that this setting will be applied automatically every time the script is run.
+
+var padding = 20;		// Enter preferred padding
+var userInput = true;	// To disable user input, set to false
+
+
+// SCRIPT STARTS HERE
+
+// Modifier keys +++++++++++++++
+// Option = all slices
+var modFlagOption  = Math.pow(2,19);
+var modFlags = [NSEvent modifierFlags];
+var modifier;
+if (modFlags & modFlagOption) {modifier = "opt"}
+
+var slices = doc.currentPage().allSlices();
+
+// Apply padding to all slices
+if (modifier == "opt" && slices.length() > 0) {
+	if (userInput == true) {
+		padding = doc.askForUserInput_initialValue("Enter positive or negative value for padding", padding.toString()).integerValue();
+	}
+	for (var i=0; i<slices.length(); i++) {
+		slices[i].frame().expandBy(padding);
+	}
+}
+
+// Apply padding to selected slice
+else if (selection.length() == 1 && selection[0].className().toString() === "MSSliceLayer") {
+	if (userInput == true) {
+		padding = doc.askForUserInput_initialValue("Enter positive or negative value for padding", padding.toString()).integerValue();
+	}
+	selection[0].frame().expandBy(padding);
+	
+	// Tooltip
+	if (slices.length() > 1) {
+		doc.showMessage("Add Option key to apply padding to all slices.");
+	}
+}
+
+// If no slices or none selected
+else {
+	doc.showMessage("Choose Export and select a slice before running this command.")
+	}
+
+
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

@@ -1,0 +1,71 @@
+// Artboard Margin
+// v.01
+// This script allows you to add margins with guides to an existing artboard. The user input dialog accepts up to 4 values, proceeding clockwise: Top, right, bottom, left. Shorthand may also be used to apply margins to all sides, vertical vs. horizontal, or top-sides-bottom—using one, two, or three values, respectively.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+
+// USER VARIABLES
+
+var margin = 20;	// Enter preferred margin setting here
+var guides = true;	// To disable guides, set to false
+
+// SCRIPT STARTS HERE
+
+if (doc.currentPage().currentArtboard() != null) {
+
+	var artboard = doc.currentPage().currentArtboard();
+	
+	// Parsing input: TRBL, TB-RL, T-RL-B, T-R-B-L
+	margin = doc.askForUserInput_initialValue("Enter up to 4 values (top, right, bottom, left):", margin.toString());
+
+	var parsedInput = margin.split(",", 4);
+	var top, right, bottom, left;
+	if (parsedInput.length == 4) {
+		top = parsedInput[0].replace(/[^\d.-]/g, '');
+		right = parsedInput[1].replace(/[^\d.-]/g, '');
+		bottom = parsedInput[2].replace(/[^\d.-]/g, '');
+		left = parsedInput[3].replace(/[^\d.-]/g, '');
+	}
+	else if (parsedInput.length == 3) {
+		top = parsedInput[0].replace(/[^\d.-]/g, '');
+		left = right = parsedInput[1].replace(/[^\d.-]/g, '');
+		bottom = parsedInput[2].replace(/[^\d.-]/g, '');
+	}
+	else if (parsedInput.length == 2) {
+		top = bottom = parsedInput[0].replace(/[^\d.-]/g, '');
+		left = right = parsedInput[1].replace(/[^\d.-]/g, '');
+	}
+	else if (parsedInput.length == 1) {
+		top = bottom = left = right = parsedInput[0].replace(/[^\d.-]/g, '');
+	}
+
+	// Use parseFloat for numeric addition instead of string
+	//top = parseFloat(top);
+	//bottom = parseFloat(bottom);
+	//left = parseFloat(left);
+	//right = parseFloat(right);
+
+	// Add guides
+	var x1, x2, y1, y2;
+	if (guides == true) {
+		x1 = left;
+		x2 = artboard.frame().width() - right;
+		y1 = top;
+		y2 = artboard.frame().height() - bottom;
+		
+		artboard.horizontalRulerData().addGuideWithValue(x1);
+		artboard.horizontalRulerData().addGuideWithValue(x2);
+		artboard.verticalRulerData().addGuideWithValue(y1);
+		artboard.verticalRulerData().addGuideWithValue(y2);
+	}
+
+}
+
+// NOTES
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

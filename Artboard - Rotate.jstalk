@@ -1,0 +1,112 @@
+// Artboard - Rotate
+// v.01d
+// This command allows you to change the orientation of an artboard from portrait to landscape, or vice versa. The artboard's contents will be rotated, as well as any guides. By default, the command rotates in a clockwise direction. To rotate counter-clockwise, hold the Option key.
+// TIP: For best results, flatten any artboard contents after rotating.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+
+// USER VARIABLES
+
+var tooltip = true;		// To turn off the tooltip, set this to false
+var clockwise = true;	// To rotate counter-clockwise, set to false
+
+
+// SCRIPT STARTS HERE
+
+// Modifier key: Option ++++++++++++++++++
+// To rotate opposite the current direction
+
+var modFlagOption = Math.pow(2,19);
+var modFlags = [NSEvent modifierFlags];
+var modifier;
+if (modFlags & modFlagOption) {(modifier = "opt") && (clockwise = !clockwise)}
+
+if (doc.currentPage().currentArtboard() != null) {
+
+	var artboard = doc.currentPage().currentArtboard();
+	var artWidth = artboard.frame().width();
+	var artHeight = artboard.frame().height();
+	var layers = artboard.layers();
+	
+	// Tooltip
+	if (tooltip == true && modifier != "opt") {
+		var mostlyLessThan90;
+		var lessThan90 = new Array();
+		for (var i=0; i<layers.length(); i++) {
+			var deg = layers[i].rotation();
+			if (deg < 90) {lessThan90.push(deg);}
+		}
+		if (lessThan90.length >= layers.length() / 2) {mostlyLessThan90 = true;}
+		if (mostlyLessThan90 == true) {
+			doc.showMessage("Hold Option key to rotate in opposite direction.");
+		}
+	}
+
+	for (var i=0; i<layers.length(); i++) {
+	
+		var x = layers[i].absoluteRect().rulerX();
+		var y = layers[i].absoluteRect().rulerY();
+		var w = layers[i].absoluteRect().width();
+		var h = layers[i].absoluteRect().height();
+		var deg = layers[i].rotation();
+
+		if (clockwise == true) {
+			layers[i].setRotation(deg - 90);
+			layers[i].absoluteRect().setRulerY(x);
+			layers[i].absoluteRect().setRulerX(artHeight - (y + h));
+		}
+		else if (clockwise != true) {
+			layers[i].setRotation(deg + 90);
+			layers[i].absoluteRect().setRulerX(y);
+			layers[i].absoluteRect().setRulerY(artWidth - (x + w));
+		}
+		
+	}
+	
+	// Swap dimensions (WxH) for artboard
+	
+	artboard.frame().setWidth(artHeight);
+	artboard.frame().setHeight(artWidth);
+	
+	// Redraw guides
+	
+	var xGuides = artboard.horizontalRulerData().numberOfGuides();
+	var yGuides = artboard.verticalRulerData().numberOfGuides();
+	if (xGuides > 0) {
+		// Use X values to create Y
+		var xValues = new Array();
+		for (var i=0; i<xGuides; i++) {
+			var x = artboard.horizontalRulerData().guideAtIndex(0);
+			artboard.horizontalRulerData().removeGuideAtIndex(0);
+			if (clockwise == true) {xValues.push(x);}
+			else {xValues.push(artWidth - x);}
+		}
+		for (var i=0; i<xValues.length; i++) {
+			artboard.verticalRulerData().addGuideWithValue(xValues[i]);
+		}
+	}
+	if (yGuides > 0) {
+		// Use Y values to create X
+		var yValues = new Array();
+		for (var i=0; i<yGuides; i++) {
+			var y = artboard.verticalRulerData().guideAtIndex(0);
+			artboard.verticalRulerData().removeGuideAtIndex(0);
+			if (clockwise != true) {yValues.push(y);}
+			else {yValues.push(artHeight - y);}
+		}
+		for (var i=0; i<yValues.length; i++) {
+			artboard.horizontalRulerData().addGuideWithValue(yValues[i]);
+		}
+	}
+
+}
+
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

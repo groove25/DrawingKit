@@ -1,0 +1,105 @@
+// Rotate 90° CCW (cmd shift 7)
+// v.02
+// This is a recreation of a standard Fireworks command and shortcut, allowing you to rotate an object or selection 90 degrees counter-clockwise. To avoid blurry edges and strokes, a ‘snap to pixel’ option is included and is enabled by default.
+// Note that if you prefer to rotate each object in a selection individually, you may hold the Option key when running the command. However, the Option key modifier will not work with the command's assigned keyboard shortcut.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+
+// USER VARIABLES
+// Rotation around an object's centerpoint may result in "off-pixel" alignment, causing blurred edges or strokes. To correct for this, set "snapToPixel" to true. Note that if multiple rotations are applied, some ‘pixel migration’ or object repositioning may occur.
+
+var snapToPixel = true; 	// To disable snap to pixel, set to false.
+var rotateEach = false;		// To rotate objects individually, set to true.
+
+
+// SCRIPT STARTS HERE
+
+// Modifier keys +++++++++++++++
+// May not be combined with command shortcut
+
+var modFlagOption  = Math.pow(2,19);
+var modFlags = [NSEvent modifierFlags];
+
+if (modFlags & modFlagOption) {rotateEach = true}
+
+
+// Find selection bounds
+
+if (selection.length() > 1 && rotateEach == false) {
+	var minXs = new Array(); 
+	var maxXs = new Array();
+	var minYs = new Array();
+	var maxYs = new Array();
+
+	for (var i=0; i<selection.length(); i++) {
+		var rect = selection[i].absoluteRect();
+		minXs.push(rect.minX());
+		maxXs.push(rect.maxX());
+		minYs.push(rect.minY());
+		maxYs.push(rect.maxY());
+	}
+
+	var x1 = Math.min.apply(Math, minXs);
+	var x2 = Math.max.apply(Math, maxXs);
+	var y1 = Math.min.apply(Math, minYs);
+	var y2 = Math.max.apply(Math, maxYs);
+
+	var boxWidth = x2 - x1;
+	var boxHeight = y2 - y1;
+	
+	// Find mid-values
+	var boxMidX = (x1 + x2)/2;
+	var boxMidY = (y1 + y2)/2;
+
+	// Rotate + position objects
+
+	for (var i=0; i<selection.length(); i++) {
+		var x = selection[i].absoluteRect().x();
+		var y = selection[i].absoluteRect().y();
+		//var midX = selection[i].absoluteRect().midX();
+		//var midY = selection[i].absoluteRect().midY();
+		var yDist = y - boxMidY;
+		var xDist = x - boxMidX;
+		var w = selection[i].absoluteRect().width();
+		var h = selection[i].absoluteRect().height(); // for CW
+
+		var angle = 90;
+		var deg = selection[i].rotation() + angle;
+		selection[i].setRotation(deg);
+
+		selection[i].absoluteRect().setX(yDist + boxMidX);
+		selection[i].absoluteRect().setY(boxMidY + -xDist - w);
+	}
+}
+
+// For individual selections
+
+else if (selection.length() == 1 || rotateEach == true) {
+	for (var i=0; i<selection.length(); i++) {
+		var angle = 90;
+		var deg = selection[i].rotation() + angle;
+		selection[i].setRotation(deg);
+	}
+}
+
+// Snap to pixel ++++++++++++++++++++
+
+if (snapToPixel == true) {
+	for (var i=0; i<selection.length(); i++) {
+		var x = selection[i].absoluteRect().x();
+		var y = selection[i].absoluteRect().y();
+		selection[i].absoluteRect().setX(Math.round(x));
+		selection[i].absoluteRect().setY(Math.round(y));
+	}
+}
+
+
+
+// NOTES
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------

@@ -1,0 +1,137 @@
+// Align to Object
+// v.04
+// This command aligns selected layers or groups to a ‘key object’ within the selection. Alignments are specified as follows: L = Left, R = Right, T = Top, B = Bottom, H = Horizontal Center, V = Vertical Center. The key object is designated by its position in the layer stack, from the bottom upwards: 1, 2, 3, etc. (If no object is specified, the bottom layer in the selection becomes the key object.)
+// As an example, H1 indicates Horizontal Center alignment to the 1st or bottom object. T3 indicates Top alignment to the 3rd object. L indicates Left alignment to the bottom object (the default key object).
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+
+// USER VARIABLES
+// Horizontal and vertical center alignments may shift objects off-pixel. To correct for this, set "snapToPixel" to true; otherwise, for mathematically precise results, set to false.
+
+var snapToPixel = true;
+
+// The following variable is experimental and allows for relative alignment (from the top left) across artboards or groups. It can be accessed by holding the Option key while running the command or you may make it the default behavior by setting it to true.
+
+var relativeAlign = false;
+
+var tooltip = true; 	// To allow tooltip for modifer key
+
+
+// SCRIPT STARTS HERE
+
+if (selection != null && selection.length() >=2) {
+
+	// Modifier key: Option ++++++++++++++++++
+
+	var modFlagOption = Math.pow(2,19);
+	var modFlags = [NSEvent modifierFlags];
+	var modifier;
+	if (modFlags & modFlagOption) {
+		modifier = "opt";
+		relativeAlign = !relativeAlign;
+		}
+
+	// Parsing input ++++++++++++++++++
+
+	var input = [doc askForUserInput:"Choose L, R, T, B, H, V. Add layer number." initialValue:"H1"]
+
+	// Test first and last character (isNaN = letter) and slice string
+	var letter, number;
+	if (isNaN(input.charAt(0)) == true) {
+		letter = input.slice(0,1); // 1st character
+		number = input.slice(1); // remaining characters
+		}
+	else if (isNaN(input.charAt(input.length()-1)) == true) {
+		letter = input.slice(-1); // last character
+		number = input.slice(0, input.length()-1); // remaining characters
+		}
+	else {
+		letter = "H";
+		number = input;
+	}
+	// Align: Compare to array, set to H as default backup
+	var align = letter.toUpperCase();
+	var alignValues = new Array('L','R','T','B','H','V');
+	if (alignValues.indexOf(align) == -1) {align = "H";}
+
+	// Key object: Fix index #, set to 0 as backup (for NaN or 0 input)
+	var keyIndex = number - 1;
+	if (isNaN(keyIndex) == true || keyIndex < 0) {keyIndex = 0;}
+	else if (keyIndex > selection.length()-1) {keyIndex = selection.length()-1;}
+
+	if (relativeAlign == false) {
+		var keyObj = selection[keyIndex].absoluteRect();
+	}
+	else {
+		var keyObj = selection[keyIndex].frame();
+	}
+
+	// Set alignment +++++++++++++++++++
+
+	for (var i=0; i<selection.length(); i++) {
+	
+		var rect;
+		if (relativeAlign == false) {rect = selection[i].absoluteRect()}
+		else {rect = selection[i].frame()}
+	
+		if (align == "L") {
+			rect.setX(keyObj.minX());
+		}
+		else if (align == "R") {
+			rect.setMaxX(keyObj.maxX());
+		}
+		else if (align == "T") {
+			rect.setY(keyObj.minY());
+		}
+		else if (align == "B") {
+			rect.setMaxY(keyObj.maxY());
+		}
+		else if (align == "H") {
+			rect.setMidY(keyObj.midY());
+		}
+		else if (align == "V") {
+			rect.setMidX(keyObj.midX());
+		}
+	}
+
+	// Snap to pixel ++++++++++++++++++++
+
+	if ((snapToPixel == true) && (align == "H")) {
+		for (var i=0; i<selection.length(); i++) {
+			var rect;
+			if (relativeAlign == false) {rect = selection[i].absoluteRect()}
+			else {rect = selection[i].frame()}
+			rect.setY(Math.round(rect.minY()));
+		}
+	}
+	else if ((snapToPixel == true) && (align == "V")) {
+		for (var i=0; i<selection.length(); i++) {
+			var rect;
+			if (relativeAlign == false) {rect = selection[i].absoluteRect()}
+			else {rect = selection[i].frame()}
+			rect.setX(Math.round(rect.minX()));
+		}
+	}
+	
+	// Tooltip
+	// Would need to create variable artboardToArtboard. Also: Relative alignment only works in relation to top left of arboard, not the sides specified.
+	/*if (tooltip == true && modifier == undefined && doc.currentPage().currentArtboard() != null) {
+		doc.showMessage("Option key = Align relative to artboard");
+	}*/
+
+} // end if (selection.length() >=2)
+
+else if (selection != null && selection.length() > 0 && selection[0].className() == "MSSliceLayer") {}
+
+else {doc.showMessage("Select at least 2 objects, including a ‘key’ object.")}
+
+
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------
