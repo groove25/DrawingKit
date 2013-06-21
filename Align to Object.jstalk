@@ -1,7 +1,8 @@
 // Align to Object
-// v.04
-// This command aligns selected layers or groups to a ‘key object’ within the selection. Alignments are specified as follows: L = Left, R = Right, T = Top, B = Bottom, H = Horizontal Center, V = Vertical Center. The key object is designated by its position in the layer stack, from the bottom upwards: 1, 2, 3, etc. (If no object is specified, the bottom layer in the selection becomes the key object.)
+// v.04b
+// This command aligns selected layers or groups to a ‘key object’ within the selection. Alignments are specified as follows: L = Left, R = Right, T = Top, B = Bottom, H = Horizontal Center, V = Vertical Center, C = Center. The key object is designated by its position in the layer stack, from the bottom upwards: 1, 2, 3, etc. (If no object is specified, the bottom layer in the selection becomes the key object.)
 // As an example, H1 indicates Horizontal Center alignment to the 1st or bottom object. T3 indicates Top alignment to the 3rd object. L indicates Left alignment to the bottom object (the default key object).
+// Center alignments (H, V, C) may shift objects off-pixel, resulting in blurred edges. To correct for this, a "Snap to pixel" option is included. This feature may be toggled off by holding the Option key while running the command, and its default setting may be adjusted within the script.
 
 // Copyright (c) 2013 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
@@ -12,7 +13,7 @@
 
 var snapToPixel = true;
 
-// The following variable is experimental and allows for relative alignment (from the top left) across artboards or groups. It can be accessed by holding the Option key while running the command or you may make it the default behavior by setting it to true.
+// The following variable is experimental and allows for relative alignment (from the top left only) across artboards or groups. It can be accessed by holding the Command key while running the command or you may make it the default behavior by setting it to true.
 
 var relativeAlign = false;
 
@@ -26,16 +27,19 @@ if (selection != null && selection.length() >=2) {
 	// Modifier key: Option ++++++++++++++++++
 
 	var modFlagOption = Math.pow(2,19);
+	var modFlagCommand = Math.pow(2,20);
 	var modFlags = [NSEvent modifierFlags];
 	var modifier;
 	if (modFlags & modFlagOption) {
-		modifier = "opt";
-		relativeAlign = !relativeAlign;
-		}
+		modifier = "opt"; snapToPixel = !snapToPixel;
+	}
+	if (modFlags & modFlagCommand) {
+		modifier = "cmd"; relativeAlign = !relativeAlign;
+	}
 
 	// Parsing input ++++++++++++++++++
 
-	var input = [doc askForUserInput:"Choose L, R, T, B, H, V. Add layer number." initialValue:"H1"]
+	var input = [doc askForUserInput:"Choose L, R, T, B, H, V, C. Add layer number." initialValue:"H1"]
 
 	// Test first and last character (isNaN = letter) and slice string
 	var letter, number;
@@ -53,7 +57,7 @@ if (selection != null && selection.length() >=2) {
 	}
 	// Align: Compare to array, set to H as default backup
 	var align = letter.toUpperCase();
-	var alignValues = new Array('L','R','T','B','H','V');
+	var alignValues = new Array('L','R','T','B','H','V','C');
 	if (alignValues.indexOf(align) == -1) {align = "H";}
 
 	// Key object: Fix index #, set to 0 as backup (for NaN or 0 input)
@@ -94,32 +98,38 @@ if (selection != null && selection.length() >=2) {
 		else if (align == "V") {
 			rect.setMidX(keyObj.midX());
 		}
+		else if (align == "C") {
+			rect.setMidY(keyObj.midY());
+			rect.setMidX(keyObj.midX());
+		}
 	}
 
 	// Snap to pixel ++++++++++++++++++++
 
-	if ((snapToPixel == true) && (align == "H")) {
+	var roundable = new Array();
+	if (["H","V","C"].indexOf(align) > -1) {
 		for (var i=0; i<selection.length(); i++) {
 			var rect;
 			if (relativeAlign == false) {rect = selection[i].absoluteRect()}
 			else {rect = selection[i].frame()}
-			rect.setY(Math.round(rect.minY()));
+			if (align == "H" || align == "C") {
+				if (rect.minY() != Math.round(rect.minY())) {roundable.push(rect.minY())}
+				if (snapToPixel == true) {rect.setY(Math.round(rect.minY()));}
+			}
+			if (align == "V" || align == "C") {
+				if (rect.minX() != Math.round(rect.minX())) {roundable.push(rect.minX())}
+				if (snapToPixel == true) {rect.setX(Math.round(rect.minX()));}
+			}
 		}
 	}
-	else if ((snapToPixel == true) && (align == "V")) {
-		for (var i=0; i<selection.length(); i++) {
-			var rect;
-			if (relativeAlign == false) {rect = selection[i].absoluteRect()}
-			else {rect = selection[i].frame()}
-			rect.setX(Math.round(rect.minX()));
-		}
-	}
-	
+
 	// Tooltip
-	// Would need to create variable artboardToArtboard. Also: Relative alignment only works in relation to top left of arboard, not the sides specified.
-	/*if (tooltip == true && modifier == undefined && doc.currentPage().currentArtboard() != null) {
-		doc.showMessage("Option key = Align relative to artboard");
-	}*/
+	
+	if (tooltip == true && modifier != "opt" && roundable.length >= 1) {
+		if (snapToPixel == true) {doc.showMessage("Option (⌥): ‘Snap to pixel’ off")}
+		else {doc.showMessage("Option (⌥): Snap to pixel")}
+	
+	}
 
 } // end if (selection.length() >=2)
 
@@ -130,6 +140,7 @@ else {doc.showMessage("Select at least 2 objects, including a ‘key’ object."
 
 // NOTES
 // Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+// Center alignment suggested by Guido Schetters.
 
 // This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
 // The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
