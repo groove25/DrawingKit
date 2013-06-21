@@ -1,8 +1,9 @@
 // Match Size
-// v.03b
+// v.03c
 // This command resizes selected layers or groups to match a key object within the selection. The key object is designated by its position in the selection's layer stack, from the bottom upwards: 1, 2, 3, etc. (If no object is specified, the bottom layer in the selection becomes the key object.) To match width or height only, add W or H to the input.
 // This script is ideal for a series of similar items such as inserted bitmaps. Once the first bitmap has been resized, the remaining bitmaps can be sized very quickly. Note, however, that a bitmap's original proportions will typically be maintained when resizing. In such cases, add W or H to specify which dimension you wish to match.
 // By default, this command also matches rotation. This can be disabled by holding the Option key when choosing the command, or by changing a preference within the script.
+// NEW: When resizing along a single dimension (using W or H), holding the Shift key will ensure that all objects maintain their original proportions—including those whose proportions are unlocked.
 
 // Copyright (c) 2013 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
@@ -20,13 +21,14 @@ var tooltip = true;
 if (selection != null && selection.length() >=2) {
 
 	// Modifier keys +++++++++++++++
-	// Option: Rotation
+	// Option: Rotation; Shift: Constrain
 	var modFlagOption  = Math.pow(2,19);
+	var modFlagShift   = Math.pow(2,17);
 	var modFlags = [NSEvent modifierFlags];
-	var modifier;
-	if (modFlags & modFlagOption) {
-		modifier = "opt"; rotate = !rotate;
-		}
+	var modifier, constrain;
+	if (modFlags & modFlagOption) {modifier = "opt"; rotate = !rotate;}
+	if (modFlags & modFlagShift) {modifier = "shift"; constrain = true;}
+	if ((modFlags & modFlagOption) && (modFlags & modFlagShift)) {modifier = "both"}
 
 	// Parsing input ++++++++++++++++++
 	var nonTextObjects = new Array();
@@ -72,6 +74,7 @@ if (selection != null && selection.length() >=2) {
 	var keyDeg = selection[keyIndex].rotation();
 
 	// Set dimensions +++++++++++++++++++
+	var unlocked = new Array(); // For constrain tooltip
 	for (var i=0; i<selection.length(); i++) {
 		if (selection[i] == keyObj) continue; // avoid resizing target
 		
@@ -86,12 +89,25 @@ if (selection != null && selection.length() >=2) {
 		}
 		// For all other objects
 		else {
+			// Constrain if Shift key + W or H input
+			var lockStatus = selection[i].frame().constrainProportions();
+			// For constrain tooltip (instead of letter only)
+			if (letter != null && lockStatus == false) {
+				unlocked.push(selection[i]);
+			}
+			if (letter != null && constrain == true) {
+				selection[i].frame().setConstrainProportions(true);
+			}
 			if (letter == null || letter !="H") {
 				selection[i].frame().setWidth(keyWidth);
 			}
 			if (letter == null || letter !="W") {
 				selection[i].frame().setHeight(keyHeight);
 			}
+			// Restore previous lock status
+			if (letter != null && constrain == true && lockStatus == false) {
+				selection[i].frame().setConstrainProportions(false);
+			} 
 		}
 	}
 
@@ -113,12 +129,25 @@ if (selection != null && selection.length() >=2) {
 	}
 
 	// Tooltips +++++
-	if (tooltip == true && modifier == undefined && angles.length > 0)  {
-		if (rotate == true) {
-			doc.showMessage("To disable rotation, hold Option key.");
+	if (tooltip == true)  {
+		if (modifier == undefined && angles.length > 0 && unlocked.length >=1) {
+			if (rotate == true) {
+				doc.showMessage("Shift (⇧): Constrain proportions     Option (⌥): Disable rotation");
+			}
+			else {
+				doc.showMessage("Shift (⇧): Constrain proportions     Option (⌥): Match rotation");
+			}
 		}
-		else {
-			doc.showMessage("Add Option key to match rotation.");
+		else if (modifier != "opt" && modifier != "both" && angles.length > 0) {
+			if (rotate == true) {
+				doc.showMessage("Option (⌥): Disable rotation");
+			}
+			else {
+				doc.showMessage("Option (⌥): Match rotation");
+			}
+		}
+		else if (modifier != "shift" && modifier != "both" && unlocked.length >=1) {
+			doc.showMessage("Shift (⇧): Constrain proportions");
 		}
 	}
 
@@ -131,8 +160,6 @@ else {
 	}
 
 
-
-/*
 // NOTES
 // Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
 
