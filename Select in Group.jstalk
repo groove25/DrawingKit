@@ -1,6 +1,7 @@
 // Select in Group (option cmd g)
-// v.01b
+// v.01c
 // This command selects all objects within a group or combined shape, which can be useful for adding or modifying style attributes or for choosing a different Boolean operation. For greatest ease of use, you may wish to assign a keyboard shortcut to this command, as suggested above. Note that this command may be applied to multiple groups or to selections within a group.
+// NEW: Use this command to select the contents of a specific artboard (or artboards). Unlike with a group, you must select the artboard(s) first.
 
 // Copyright (c) 2013 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
@@ -28,7 +29,7 @@ for (var i=0; i<selection.length(); i++) {
 			group.layers()[l].setIsSelected(toggle);
 		}
 	}
-	
+
 	// For selected layers within groups, or subpaths within complex shapes
 	else if (layerType.indexOf(selection[i].className().toString()) > -1) {
 		var group = selection[i].parentGroup();
@@ -41,7 +42,15 @@ for (var i=0; i<selection.length(); i++) {
 			}
 		}
 	}
-	
+
+	// For selected artboards
+	else if (selection[i].className() == "MSArtboardGroup") {
+		for (var l=0; l<selection[i].layers().length(); l++) {
+			selection[i].layers()[l].setIsSelected(true);
+		}
+		selection[i].setIsSelected(false);
+	}
+
 }
 
 } // end if (selection != null)
