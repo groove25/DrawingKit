@@ -1,5 +1,5 @@
 // Draw Content Bounds
-// v.02
+// v.02b
 // This command allows you to visualize the contentBounds() property for the current page by adding a rectangle to the canvas. Holding the Option key will allow you to view the page's frame as well. If you prefer, you can also draw guides to represent these properties by holding the Shift key, or by setting a preference within the script.
 
 // Copyright (c) 2013 Doug Downing. All rights reserved.
@@ -61,6 +61,13 @@ if (pageFrame == true) {
 	page.frame().setY(pageY);
 	page.frame().setWidth(pageW);
 	page.frame().setHeight(pageH);
+	if (page.style().fills()[0] == null) {
+		page.style().fills().addNewStylePart(); // fix for 2.3.2
+	}
+	if (page.style().borders()[0] == null) {
+		page.style().borders().addNewStylePart();
+		page.style().borders()[0].setPosition(1); // inside
+	}
 	page.style().contextSettings().setOpacity(.3);
 	page.setName("page.frame()");
 	page.setIsLocked(true);
@@ -90,6 +97,13 @@ bounds.frame().setX(x);
 bounds.frame().setY(y);
 bounds.frame().setWidth(w);
 bounds.frame().setHeight(h);
+if (bounds.style().fills()[0] == null) {
+	bounds.style().fills().addNewStylePart(); // fix for 2.3.2
+}
+if (bounds.style().borders()[0] == null) {
+	bounds.style().borders().addNewStylePart();
+	bounds.style().borders()[0].setPosition(1); // inside
+}
 bounds.style().contextSettings().setOpacity(.5);
 bounds.setName("contentBounds()");
 bounds.setIsLocked(true);
