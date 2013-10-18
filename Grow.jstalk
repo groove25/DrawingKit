@@ -1,0 +1,102 @@
+// Grow
+// v.01a
+// This command allows you to expand or contract an object (or objects) on all sides by a particular pixel amount. Note that expanding a group will produce a different outcome than expanding the objects within that group. Also, proportions are not strictly maintained by this command.
+// By default, bitmaps are protected from being expanded/contracted, and the command will not run unless overridden by holding the Option key. This preference can be changed within the script’s ‘User Variables’ section.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+// USER VARIABLES
+
+var padding = 20;	// Set preferred value in pixels (No units!)
+
+// The following variable will protect bitmaps from being unintentionally expanded or contracted, which can cause distortion. It can be overridden by holding the Option key while running the command. (By default, this variable is set to true; set it to false if you'd prefer that bitmaps be freely expanded or contracted.)
+
+var lockBitmaps = true;
+
+// SCRIPT STARTS HERE
+
+// Modifier key: Option ++++++++++++++++++
+var modFlagOption = Math.pow(2,19);
+var modFlags = [NSEvent modifierFlags];
+var modifier;
+if (modFlags & modFlagOption) {modifier = "opt"; lockBitmaps = !lockBitmaps;}
+
+if (selection != null && selection.length() > 0) {
+
+	// Test for bitmaps in selection ++++++++++++++++
+	var bitmaps = new Array();
+	for (var i=0; i<selection.length(); i++) {
+		if (selection[i].className() == "MSBitmapLayer") {
+			bitmaps.push(selection[i]);
+		}
+	}
+
+	// Show message if bitmap(s) included ++++++++++++++++++
+	if ((bitmaps.length > 0) && (lockBitmaps == true) && (modifier == undefined)) {
+		if (bitmaps.length == 1) {
+			doc.showMessage("Your selection includes a bitmap. Hold Option (⌥) while running this command.");
+		}
+		if (bitmaps.length > 1) {
+			doc.showMessage("Your selection includes bitmaps. Hold Option (⌥) while running this command.");
+		}
+	}
+	// Run command +++++++++++++++++++
+	else {
+		// Obtain padding (px) value
+		var px = doc.askForUserInput_initialValue("Add or subtract to all sides (e.g., 20)", padding.toString());
+		// Remove non-numeric. Allow for subtraction and decimals.
+		px = parseFloat(px);
+		if (isNaN(px) == true) {px = 0;}
+
+		// To avoid disappearing objects and/or X-Y drift
+		var zeroAlert;
+		for (var i=0; i<selection.length(); i++) {
+			var w = selection[i].frame().width();
+			var h = selection[i].frame().height();
+			if ((w + (px*2) <= 0) || (h + (px*2) <= 0)) {zeroAlert = true;}
+		}
+
+		// Apply padding
+		if (zeroAlert != true) {
+			for (var i=0; i<selection.length(); i++) {
+
+				// If proportions are constrained, unlock them
+				var constrain = selection[i].frame().constrainProportions();
+				if (constrain == true) {
+					selection[i].frame().setConstrainProportions(false);
+				}
+				// Expand or contract
+				selection[i].frame().expandBy(px);
+
+				// If proportions were previously constrained, relock them
+				if (constrain == true) {
+					selection[i].frame().setConstrainProportions(true);
+				}
+
+			}
+		}
+		else {
+			doc.showMessage("One or more objects were too small to render. Try a different value.");
+		}
+
+		// Show message if bitmaps have been resized
+		if ((bitmaps.length > 0) && (lockBitmaps == false) && (modifier == undefined) && (px > 0 || px < 0) && (zeroAlert != true)) {
+			if (bitmaps.length == 1) {
+				doc.showMessage("Your selection included a bitmap, which has been resized.");
+			}
+			if (bitmaps.length > 1) {
+				doc.showMessage("Your selection included bitmaps, which have been resized.");
+			}
+		}
+	}
+
+} // end if (selection != null && selection.length() > 0)
+
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------
