@@ -1,0 +1,25 @@
+// Deselect (shift cmd a)
+// v.01a
+// This command deselects all objects. It is intended for users who prefer not to hit the Esc key multiple times or click on the canvas to deselect an item and/or those who are accustomed to similar commands found in Fireworks, Photoshop, Illustrator, etc.
+// If you have an active bitmap or text selection, it may be necessary to click on the canvas after running the command to refresh the screen and re-activate normal cursor behaviors (such as layer guides). Also, this command will have no effect if you are in ‘path editing’ mode. Basically, if you are editing an object, it's best to exit that operation first—using the Esc key—before running this command.
+
+// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+
+// SCRIPT STARTS HERE
+
+for (var i=0; i<selection.length(); i++) {
+	selection[i].setIsSelected(false);
+}
+
+// To clear bitmap or text selections (no effect)
+// doc.currentView().refresh();
+
+
+// NOTES
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------
