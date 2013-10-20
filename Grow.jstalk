@@ -1,5 +1,5 @@
 // Grow
-// v.01a
+// v.01b
 // This command allows you to expand or contract an object (or objects) on all sides by a particular pixel amount. Note that expanding a group will produce a different outcome than expanding the objects within that group. Also, proportions are not strictly maintained by this command.
 // By default, bitmaps are protected from being expanded/contracted, and the command will not run unless overridden by holding the Option key. This preference can be changed within the script’s ‘User Variables’ section.
 
@@ -72,6 +72,13 @@ if (selection != null && selection.length() > 0) {
 				// If proportions were previously constrained, relock them
 				if (constrain == true) {
 					selection[i].frame().setConstrainProportions(true);
+				}
+				// If artboard, reposition contents
+				if (selection[i].className() == "MSArtboardGroup") {
+					for (var l=0; l<selection[i].layers().length(); l++) {
+						selection[i].layers()[l].frame().addX(px);
+						selection[i].layers()[l].frame().addY(px);
+					}
 				}
 
 			}
