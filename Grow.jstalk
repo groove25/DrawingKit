@@ -1,16 +1,17 @@
 // Grow
-// v.01b
+// v.01c
 // This command allows you to expand or contract an object (or objects) on all sides by a particular pixel amount. Note that expanding a group will produce a different outcome than expanding the objects within that group. Also, proportions are not strictly maintained by this command.
-// By default, bitmaps are protected from being expanded/contracted, and the command will not run unless overridden by holding the Option key. This preference can be changed within the script’s ‘User Variables’ section.
+// By default, non-square bitmaps are protected from being expanded/contracted, and the command will not run unless overridden by holding the Option key. This preference can be changed within the script’s ‘User Variables’ section.
+// Slices and artboards may also be expanded or contracted with this command.
 
-// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Copyright (c) 2013–2014 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
 
 // USER VARIABLES
 
 var padding = 20;	// Set preferred value in pixels (No units!)
 
-// The following variable will protect bitmaps from being unintentionally expanded or contracted, which can cause distortion. It can be overridden by holding the Option key while running the command. (By default, this variable is set to true; set it to false if you'd prefer that bitmaps be freely expanded or contracted.)
+// The following variable will protect non-square bitmaps from being unintentionally expanded or contracted, which can cause distortion. It can be overridden by holding the Option key while running the command. (By default, this variable is set to true; set it to false if you'd prefer that bitmaps be freely expanded or contracted.)
 
 var lockBitmaps = true;
 
@@ -24,10 +25,11 @@ if (modFlags & modFlagOption) {modifier = "opt"; lockBitmaps = !lockBitmaps;}
 
 if (selection != null && selection.length() > 0) {
 
-	// Test for bitmaps in selection ++++++++++++++++
+	// Test for non-square bitmaps in selection ++++++++++++++++
+	// NOTE: Grouped bitmaps are NOT protected by this.
 	var bitmaps = new Array();
 	for (var i=0; i<selection.length(); i++) {
-		if (selection[i].className() == "MSBitmapLayer") {
+		if (selection[i].className() == "MSBitmapLayer" && selection[i].frame().width()/selection[i].frame().height() != 1) {
 			bitmaps.push(selection[i]);
 		}
 	}
@@ -67,22 +69,54 @@ if (selection != null && selection.length() > 0) {
 					selection[i].frame().setConstrainProportions(false);
 				}
 				// Expand or contract
-				selection[i].frame().expandBy(px);
+				//selection[i].frame().expandBy(px); // deprecated in Sketch 3
+				// Functions represent ‘grow’ but also work for ‘shrink’
+				selection[i].frame().subtractX(px); // reposition
+				selection[i].frame().subtractY(px);
+				selection[i].frame().addWidth(px*2); // resize
+				selection[i].frame().addHeight(px*2);
 
 				// If proportions were previously constrained, relock them
 				if (constrain == true) {
 					selection[i].frame().setConstrainProportions(true);
 				}
-				// If artboard, reposition contents
+				// If artboard, reposition contents (and guides)
 				if (selection[i].className() == "MSArtboardGroup") {
-					for (var l=0; l<selection[i].layers().length(); l++) {
-						selection[i].layers()[l].frame().addX(px);
-						selection[i].layers()[l].frame().addY(px);
+					var artboard = selection[i];
+					for (var l=0; l<artboard.layers().length(); l++) {
+						artboard.layers()[l].frame().addX(px);
+						artboard.layers()[l].frame().addY(px);
 					}
-				}
-
-			}
-		}
+					// Reposition existing guides
+					var xGuides = artboard.horizontalRulerData();
+					var xGuidesLength = xGuides.numberOfGuides();
+					var yGuides = artboard.verticalRulerData();
+					var yGuidesLength = yGuides.numberOfGuides();
+					if (xGuidesLength > 0) {
+						var xValues = new Array();
+						for (var i=0; i<xGuidesLength; i++) {
+							var x = xGuides.guideAtIndex(0);
+							xGuides.removeGuideAtIndex(0);
+							xValues.push(x + px);
+						}
+						for (var i=0; i<xValues.length; i++) {
+							xGuides.addGuideWithValue(xValues[i]);
+						}
+					}
+					if (yGuidesLength > 0) {
+						var yValues = new Array();
+						for (var i=0; i<yGuidesLength; i++) {
+							var y = yGuides.guideAtIndex(0);
+							yGuides.removeGuideAtIndex(0);
+							yValues.push(y + px);
+						}
+						for (var i=0; i<yValues.length; i++) {
+							yGuides.addGuideWithValue(yValues[i]);
+						}
+					}
+				} // end if artboard
+			} // end selection loop
+		} // end if not zeroAlert
 		else {
 			doc.showMessage("One or more objects were too small to render. Try a different value.");
 		}
