@@ -1,8 +1,8 @@
 // Create Guides
-// v.05x
+// v.05y
 // Create Guides is a multi-faceted command that allows you to quickly generate guides based on one or more selected objects, the boundaries of a selection, or an artboard or canvas. To apply guides to one or more objects, simply select the objects on the artboard or canvas, run the command, and enter the desired axes in the input dialog (L = left, R = right, T = top, B = bottom, H = horizontal center, V = vertical center). To apply guides based on the boundaries of the entire selection, hold the Option key while choosing the command. If nothing is selected on an artboard or canvas, the script will allow you to create incremental guides based on X, Y values that you specify. For the canvas, you may also specify boundaries (width and height) for the guides.
 
-// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Copyright (c) 2013–2014 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
 
 
@@ -173,40 +173,42 @@ if (selection == null || selection.length() == 0) {
 var xValues = new Array();
 var yValues = new Array();
 
-var rulerXDiff, rulerYDiff;
-if (artboard == true) {
-	var artRect = context.absoluteRect();
-	rulerXDiff = artRect.rulerX() - artRect.x();
-	rulerYDiff = artRect.rulerY() - artRect.y();
-}
-else {
-	var pageRect = context.absoluteRect();
-	rulerXDiff = pageRect.rulerX() - pageRect.x();
-	rulerYDiff = pageRect.rulerY() - pageRect.y();
-}
+if (selection != null && selection.length() >= 1) {
+	var rulerXDiff, rulerYDiff;
+	if (artboard == true) {
+		var artRect = context.layers()[0].absoluteRect();
+		rulerXDiff = artRect.rulerX() - artRect.x();
+		rulerYDiff = artRect.rulerY() - artRect.y();
+	}
+	else {
+		var pageRect = context.absoluteRect();
+		rulerXDiff = pageRect.rulerX() - pageRect.x();
+		rulerYDiff = pageRect.rulerY() - pageRect.y();
+	}
 
-function createAxisArrays() {
-	for (var a=0; a<axis.length; a++) {
-		if (["l", "left", "sides", "s", "all", "a"].indexOf(axis[a]) > -1) {
-			xValues.push(x1 + rulerXDiff);
-		}
-		if (["r", "right", "sides", "s", "all", "a"].indexOf(axis[a]) > -1) {
+	function createAxisArrays() {
+		for (var a=0; a<axis.length; a++) {
+			if (["l", "left", "sides", "s", "all", "a"].indexOf(axis[a]) >-1) {
+				xValues.push(x1 + rulerXDiff);
+			}
+			if (["r", "right", "sides", "s", "all", "a"].indexOf(axis[a]) >-1) {
 			xValues.push(x2 + rulerXDiff);
-		}
-		if (["t", "top", "sides", "s", "all", "a"].indexOf(axis[a]) > -1) {
-			yValues.push(y1 + rulerYDiff);
-		}
-		if (["b", "bottom", "sides", "s", "all", "a"].indexOf(axis[a]) > -1) {
-			yValues.push(y2 + rulerYDiff);
-		}
-		if (["h", "hc", "horz", "horizon", "horizontal", "horizontalcenter", "center", "c", "all", "a"].indexOf(axis[a]) > -1) {
-			yValues.push(yMid + rulerYDiff);
-		}
-		if (["v", "vc", "vert", "vertical", "verticalcenter", "center", "c", "all", "a"].indexOf(axis[a]) > -1) {
-			xValues.push(xMid + rulerXDiff);
+			}
+			if (["t", "top", "sides", "s", "all", "a"].indexOf(axis[a]) >-1) {
+				yValues.push(y1 + rulerYDiff);
+			}
+			if (["b", "bottom", "sides", "s", "all","a"].indexOf(axis[a]) >-1) {
+				yValues.push(y2 + rulerYDiff);
+			}
+			if (["h", "hc", "horz", "horizon", "horizontal", "horizontalcenter", "center", "c", "all", "a"].indexOf(axis[a]) >-1) {
+				yValues.push(yMid + rulerYDiff);
+			}
+			if (["v", "vc", "vert", "vertical", "verticalcenter", "center", "c", "all", "a"].indexOf(axis[a]) >-1) {
+				xValues.push(xMid + rulerXDiff);
+			}
 		}
 	}
-}
+} // end if selection
 
 // NOTE: Selection guides have pre-defined x1, x2, y1, y2, xMid, yMid values that are applied only once, whereas object guides require finding and applying these values for every object individually, looping through the selection.
 
