@@ -1,8 +1,8 @@
 // Slice Padding
-// v.01
-// This command applies padding to a selected slice within the Export/Slices panel. To apply padding to all slices on the current page, hold the Option key when running the command.
+// v.02c
+// This command applies padding to a selected slice (or slices). To apply padding to all slices on the current page, hold the Option key when running the command.
 
-// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Copyright (c) 2013–14 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
 
 
@@ -22,35 +22,69 @@ var modFlags = [NSEvent modifierFlags];
 var modifier;
 if (modFlags & modFlagOption) {modifier = "opt"}
 
-var slices = doc.currentPage().allSlices();
-
-// Apply padding to all slices
-if (modifier == "opt" && slices.length() > 0) {
-	if (userInput == true) {
-		padding = doc.askForUserInput_initialValue("Enter positive or negative value for padding", padding.toString()).integerValue();
+// Check for slices on page
+var slices = new Array();
+try {
+	for (var i=0; i<doc.currentPage().allSlices().length(); i++) {
+		slices.push(doc.currentPage().allSlices()[i]);
 	}
-	for (var i=0; i<slices.length(); i++) {
-		slices[i].frame().expandBy(padding);
+} catch(e) {
+	var exportables = doc.currentPage().exportableLayers();
+	for (var i=0; i<exportables.length(); i++) {
+		if (exportables[i].className().toString() === "MSSliceLayer") {
+			slices.push(exportables[i]);
+		}
 	}
 }
 
-// Apply padding to selected slice
-else if (selection.length() == 1 && selection[0].className().toString() === "MSSliceLayer") {
+// Check for selected slices
+var selectedSlices = new Array();
+if (selection.length() > 0) {
+	for (var i=0; i<selection.length(); i++) {
+		if (selection[i].className().toString() === "MSSliceLayer") {
+			selectedSlices.push(selection[i]);
+		}
+	}
+}
+
+// If Option key, apply padding to all slices
+if (modifier == "opt" && slices.length > 0) {
 	if (userInput == true) {
 		padding = doc.askForUserInput_initialValue("Enter positive or negative value for padding", padding.toString()).integerValue();
 	}
-	selection[0].frame().expandBy(padding);
-	
+	for (var i=0; i<slices.length; i++) {
+		//slices[i].frame().expandBy(padding); // deprecated in Sketch 3
+		slices[i].frame().subtractX(padding); // reposition
+		slices[i].frame().subtractY(padding);
+		slices[i].frame().addWidth(padding*2); // resize
+		slices[i].frame().addHeight(padding*2);
+	}
+}
+
+// Otherwise, apply padding to selected slice(s)
+else if (selectedSlices.length > 0) {
+	if (userInput == true) {
+		padding = doc.askForUserInput_initialValue("Enter positive or negative value for padding", padding.toString()).integerValue();
+	}
+	for (var i=0; i<selectedSlices.length; i++) {
+		//selection[i].frame().expandBy(padding); // deprecated in Sketch 3
+		selectedSlices[i].frame().subtractX(padding); // reposition
+		selectedSlices[i].frame().subtractY(padding);
+		selectedSlices[i].frame().addWidth(padding*2); // resize
+		selectedSlices[i].frame().addHeight(padding*2);
+		}
 	// Tooltip
-	if (slices.length() > 1) {
-		doc.showMessage("Add Option key to apply padding to all slices.");
+	if (slices.length > 1 && selectedSlices.length < slices.length) {
+		doc.showMessage("Add Option key (⌥) to apply padding to all slices.");
 	}
 }
 
-// If no slices or none selected
+else if (selectedSlices.length == 0 && slices.length > 0) {
+	doc.showMessage("Select a slice, or hold Option key (⌥) to apply padding to all slices.");
+}
 else {
-	doc.showMessage("Choose Export and select a slice before running this command.")
-	}
+	doc.showMessage("Choose Export or create a slice before running this command.");
+}
 
 
 // NOTES
