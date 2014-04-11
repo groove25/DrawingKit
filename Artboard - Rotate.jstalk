@@ -1,9 +1,9 @@
 // Artboard - Rotate
-// v.01d
-// This command allows you to change the orientation of an artboard from portrait to landscape, or vice versa. The artboard's contents will be rotated, as well as any guides. By default, the command rotates in a clockwise direction. To rotate counter-clockwise, hold the Option key.
+// v.01e
+// This command allows you to change the orientation of an artboard from portrait to landscape, or vice versa. The artboard's contents will be rotated, as well as any guides. By default, the command rotates in a clockwise direction. To rotate counter-clockwise, hold the Option key. To rotate the artboard only, without contents or guides, hold the Shift key.
 // TIP: For best results, flatten any artboard contents after rotating.
 
-// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Copyright (c) 2013–2014 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
 
 
@@ -11,17 +11,21 @@
 
 var tooltip = true;		// To turn off the tooltip, set this to false
 var clockwise = true;	// To rotate counter-clockwise, set to false
+var rotateContents = true; // To rotate artboard only, set to false
 
 
 // SCRIPT STARTS HERE
 
-// Modifier key: Option ++++++++++++++++++
-// To rotate opposite the current direction
+// Modifier keys ++++++++++++++++++
+// Option: Rotate opposite the current direction
+// Shift: Constrain rotation to artboard only
 
 var modFlagOption = Math.pow(2,19);
+var modFlagShift   = Math.pow(2,17);
 var modFlags = [NSEvent modifierFlags];
-var modifier;
+var modifier, modifier2;
 if (modFlags & modFlagOption) {(modifier = "opt") && (clockwise = !clockwise)}
+if (modFlags & modFlagShift) {(modifier2 = "shift") && (rotateContents = !rotateContents)}
 
 if (doc.currentPage().currentArtboard() != null) {
 
@@ -31,76 +35,97 @@ if (doc.currentPage().currentArtboard() != null) {
 	var layers = artboard.layers();
 	
 	// Tooltip
-	if (tooltip == true && modifier != "opt") {
+	if (tooltip == true && layers.length() > 0) {
 		var mostlyLessThan90;
-		var lessThan90 = new Array();
+		if (modifier != "opt" || modifier2 != "shift") {
+			var lessThan90 = new Array();
+			for (var i=0; i<layers.length(); i++) {
+				var deg = layers[i].rotation();
+				if (Math.abs(deg) < 90 || Math.abs(deg) > 270) {lessThan90.push(deg);}
+			}
+			if (lessThan90.length > layers.length() / 2) {
+				mostlyLessThan90 = true;
+			}
+		}
+		var message;
+		if (mostlyLessThan90 == true && rotateContents == true) {
+			if (modifier != "opt" && modifier2 != "shift") {
+				message = "Option (⌥): Rotate opposite direction      Shift (⇧): Artboard only";
+			}
+			else if (modifier == "opt" && modifier2 != "shift") {
+				message = "Hold Shift key to rotate artboard only";
+			}
+		}
+		else if (rotateContents == false && modifier2 != "shift") {
+			message = "Shift (⇧): Rotate contents      Opt-Shift (⌥⇧): Opposite direction";
+		}
+		if (message != undefined) {
+			doc.showMessage(message);
+		}
+	}
+
+	// Rotate contents and reposition
+	if (rotateContents == true) {
 		for (var i=0; i<layers.length(); i++) {
+			var x = layers[i].absoluteRect().rulerX();
+			var y = layers[i].absoluteRect().rulerY();
+			var w = layers[i].absoluteRect().width();
+			var h = layers[i].absoluteRect().height();
 			var deg = layers[i].rotation();
-			if (deg < 90) {lessThan90.push(deg);}
-		}
-		if (lessThan90.length >= layers.length() / 2) {mostlyLessThan90 = true;}
-		if (mostlyLessThan90 == true) {
-			doc.showMessage("Hold Option key to rotate in opposite direction.");
+
+			if (clockwise == true) {
+				layers[i].setRotation(deg - 90);
+				layers[i].absoluteRect().setRulerY(x);
+				layers[i].absoluteRect().setRulerX(artHeight - (y + h));
+			}
+			else if (clockwise != true) {
+				layers[i].setRotation(deg + 90);
+				layers[i].absoluteRect().setRulerX(y);
+				layers[i].absoluteRect().setRulerY(artWidth - (x + w));
+			}
 		}
 	}
 
-	for (var i=0; i<layers.length(); i++) {
-	
-		var x = layers[i].absoluteRect().rulerX();
-		var y = layers[i].absoluteRect().rulerY();
-		var w = layers[i].absoluteRect().width();
-		var h = layers[i].absoluteRect().height();
-		var deg = layers[i].rotation();
-
-		if (clockwise == true) {
-			layers[i].setRotation(deg - 90);
-			layers[i].absoluteRect().setRulerY(x);
-			layers[i].absoluteRect().setRulerX(artHeight - (y + h));
-		}
-		else if (clockwise != true) {
-			layers[i].setRotation(deg + 90);
-			layers[i].absoluteRect().setRulerX(y);
-			layers[i].absoluteRect().setRulerY(artWidth - (x + w));
-		}
-		
-	}
-	
 	// Swap dimensions (WxH) for artboard
-	
 	artboard.frame().setWidth(artHeight);
 	artboard.frame().setHeight(artWidth);
-	
+
 	// Redraw guides
-	
-	var xGuides = artboard.horizontalRulerData().numberOfGuides();
-	var yGuides = artboard.verticalRulerData().numberOfGuides();
-	if (xGuides > 0) {
-		// Use X values to create Y
-		var xValues = new Array();
-		for (var i=0; i<xGuides; i++) {
-			var x = artboard.horizontalRulerData().guideAtIndex(0);
-			artboard.horizontalRulerData().removeGuideAtIndex(0);
-			if (clockwise == true) {xValues.push(x);}
-			else {xValues.push(artWidth - x);}
+	if (rotateContents == true) {
+		var xGuides = artboard.horizontalRulerData().numberOfGuides();
+		var yGuides = artboard.verticalRulerData().numberOfGuides();
+		if (xGuides > 0) {
+			// Use X values to create Y
+			var xValues = new Array();
+			for (var i=0; i<xGuides; i++) {
+				var x = artboard.horizontalRulerData().guideAtIndex(0);
+				artboard.horizontalRulerData().removeGuideAtIndex(0);
+				if (clockwise == true) {xValues.push(x);}
+				else {xValues.push(artWidth - x);}
+			}
+			for (var i=0; i<xValues.length; i++) {
+				artboard.verticalRulerData().addGuideWithValue(xValues[i]);
+			}
 		}
-		for (var i=0; i<xValues.length; i++) {
-			artboard.verticalRulerData().addGuideWithValue(xValues[i]);
-		}
-	}
-	if (yGuides > 0) {
-		// Use Y values to create X
-		var yValues = new Array();
-		for (var i=0; i<yGuides; i++) {
-			var y = artboard.verticalRulerData().guideAtIndex(0);
-			artboard.verticalRulerData().removeGuideAtIndex(0);
-			if (clockwise != true) {yValues.push(y);}
-			else {yValues.push(artHeight - y);}
-		}
-		for (var i=0; i<yValues.length; i++) {
-			artboard.horizontalRulerData().addGuideWithValue(yValues[i]);
+		if (yGuides > 0) {
+			// Use Y values to create X
+			var yValues = new Array();
+			for (var i=0; i<yGuides; i++) {
+				var y = artboard.verticalRulerData().guideAtIndex(0);
+				artboard.verticalRulerData().removeGuideAtIndex(0);
+				if (clockwise != true) {yValues.push(y);}
+				else {yValues.push(artHeight - y);}
+			}
+			for (var i=0; i<yValues.length; i++) {
+				artboard.horizontalRulerData().addGuideWithValue(yValues[i]);
+			}
 		}
 	}
 
+}
+
+else {
+	doc.showMessage("No artboard is selected or currently active.");
 }
 
 // NOTES
