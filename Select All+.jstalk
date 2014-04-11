@@ -1,0 +1,76 @@
+// Select All+ (option cmd a)
+// v.01b
+// This command selects all objects on the current page, including any locked objects. This can be useful when trying to copy or move the contents of an entire page—without having to unlock and relock individual elements before and  after.
+// If an artboard is present, its contents are selected rather than the artboard itself.
+// Note that if you intend to move objects using the keyboard arrow keys, they must be unlocked beforehand. If moving using the arrow keys is part of your workflow, you can enable the unlocking of objects by holding the Option key while running the command (from the plug-ins menu) or by setting a preference for this behavior within User Variables. You may also want to try the ‘Lock or Unlock’ command for unlocking a mixed selection of locked and unlocked objects.
+
+// Copyright (c) 2013–2014 Doug Downing. All rights reserved.
+// Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
+
+// USER VARIABLES
+
+var unlock = false;		// Set to true to unlock all objects by default
+var tooltip = true;
+
+// SCRIPT STARTS HERE
+
+// Modifier key: Option ++++++++++++++++++
+// Include Command to avoid misfire during shortcut
+var modFlagOption = Math.pow(2,19);
+var modFlagCommand = Math.pow(2,20);
+var modFlags = [NSEvent modifierFlags];
+var modifier;
+if ((modFlags & modFlagOption) && !(modFlags & modFlagCommand)) {modifier = "opt"; unlock = !unlock;}
+
+// Deselect all, to prevent conflicts with selected children
+for (var i=0; i<selection.length(); i++) {
+	selection[i].setIsSelected(false);
+}
+
+// Select first-level hierarchy within artboards, or on page
+var lockedObjects = new Array();
+for (var i=0; i<doc.currentPage().layers().length(); i++) {
+	if (doc.currentPage().layers()[i].className() == "MSArtboardGroup") {
+		var artboardLayers = doc.currentPage().layers()[i].layers();
+		for (var j=0; j<artboardLayers.length(); j++) {
+			artboardLayers[j].setIsSelected(true);
+			// Check for locked objects
+			if (artboardLayers[j].isLocked() == true) {
+				lockedObjects.push(artboardLayers[j]);
+			}
+			// Unlock objects, if specified by user
+			if (unlock == true) {
+				artboardLayers[j].setIsLocked(false);
+			}
+		}
+	}
+	else {
+		doc.currentPage().layers()[i].setIsSelected(true);
+		// Check for locked objects
+		if (doc.currentPage().layers()[i].isLocked() == true) {
+			lockedObjects.push(doc.currentPage().layers()[i]);
+		}
+		// Unlock objects, if specified by user
+		if (unlock == true) {
+			doc.currentPage().layers()[i].setIsLocked(false);
+		}
+	}
+}
+
+// Let user know about option to unlock (or lock) objects
+if (tooltip == true && modifier != "opt" && lockedObjects.length > 0) {
+	if (unlock != true) {
+		doc.showMessage("Add Option (⌥) key to unlock all objects.");
+	}
+	else {
+		doc.showMessage("Add Option (⌥) key to leave objects locked.");
+	}
+}
+
+// NOTES
+// Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!
+
+// This script is not to be distributed, shared, modified, etc. without written permission of the author. (See copyright notice above.)
+// The script is provided “as is", to be used at your own risk, with no warranties of any kind, whether expressed or implied. Under no circumstances shall the author be liable for direct, indirect, special, incidental, or consequential damages resulting from the use, misuse, or inability to use this script.
+
+// ---------------------------------------------------------------
