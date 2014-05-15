@@ -1,5 +1,5 @@
 // Select in Group (option cmd g)
-// v.01c
+// v.01d
 // This command selects all objects within a group or combined shape, which can be useful for adding or modifying style attributes or for choosing a different Boolean operation. For greatest ease of use, you may wish to assign a keyboard shortcut to this command, as suggested above. Note that this command may be applied to multiple groups or to selections within a group.
 // NEW: Use this command to select the contents of a specific artboard (or artboards). Unlike with a group, you must select the artboard(s) first.
 
@@ -17,16 +17,16 @@ if (selection != null) {
 
 var layerType = new Array("MSShapeGroup", "MSBitmapLayer", "MSTextLayer", "MSRectangleShape", "MSOvalShape", "MSStarShape", "MSPolygonShape",  "MSTriangleShape", "MSSpiralShape", "MSShapePathLayer");
 
-for (var i=0; i<selection.length(); i++) {
+for (var i=0; i<selection.count(); i++) {
 
 	// For selected groups & complex shapes
-	if ((selection[i].className() == "MSLayerGroup") || (selection[i].className() == "MSShapeGroup" && selection[i].layers().length() > 1)) {
+	if ((selection[i].className() == "MSLayerGroup") || (selection[i].className() == "MSShapeGroup" && selection[i].layers().count() > 1)) {
 		var group = selection[i];
-		for (var l=0; l<group.layers().length(); l++) {
+		for (var l=0; l<group.layers().count(); l++) {
 			var toggle;
-			if (subGroups == false && group.layers()[l].className() == "MSLayerGroup") {toggle = false}
+			if (subGroups == false && group.layers().objectAtIndex(l).className() == "MSLayerGroup") {toggle = false}
 			else {toggle = true}
-			group.layers()[l].setIsSelected(toggle);
+			group.layers().objectAtIndex(l).setIsSelected(toggle);
 		}
 	}
 
@@ -34,19 +34,19 @@ for (var i=0; i<selection.length(); i++) {
 	else if (layerType.indexOf(selection[i].className().toString()) > -1) {
 		var group = selection[i].parentGroup();
 		if (group.className() == "MSLayerGroup" || group.className() == "MSShapeGroup") {
-			for (var l=0; l<group.layers().length(); l++) {
+			for (var l=0; l<group.layers().count(); l++) {
 				var toggle;
-				if (subGroups == false && group.layers()[l].className() == "MSLayerGroup") {toggle = false}
+				if (subGroups == false && group.layers().objectAtIndex(l).className() == "MSLayerGroup") {toggle = false}
 				else {toggle = true;}
-				group.layers()[l].setIsSelected(toggle);
+				group.layers().objectAtIndex(l).setIsSelected(toggle);
 			}
 		}
 	}
 
 	// For selected artboards
 	else if (selection[i].className() == "MSArtboardGroup") {
-		for (var l=0; l<selection[i].layers().length(); l++) {
-			selection[i].layers()[l].setIsSelected(true);
+		for (var l=0; l<selection[i].layers().count(); l++) {
+			selection[i].layers().objectAtIndex(l).setIsSelected(true);
 		}
 		selection[i].setIsSelected(false);
 	}

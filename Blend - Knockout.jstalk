@@ -1,12 +1,12 @@
 // Blend - Knockout
-// v.03g
+// v.03h
 // This command offers a quick way to achieve a "knockout" effect, where the opacity of the selected layer(s) knocks out all underlying layers—an effect that can be particularly useful for text.
 // To constrain the knockout's depth, hold the Option key while running the command; this applies a mask blend to the parent group—if one exists—which limits the effect to the group itself. Alternatively, a "transparency knockout" can be created by holding the Shift key while running the command; in this case, any transparency within the selected layer(s) will knock out the underlying layers—basically, the reverse of an opacity knockout. (Be aware that a fully opaque object will disappear when a transparency knockout is applied.)
 // Note that these knockout effects may temporarily disable the blend mode menu for any object to which they are applied; running the command a second time will turn off the effect and restore any disabled blend mode options. (The Blend - Forward and Blend - Backward commands may also be used to access these blend modes.)
 
 // NOTE: A side effect of constraining knockout is that the group itself may appear clipped by underlying layers. Sorry! It's an imperfect system.
 
-// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Copyright (c) 2013–14 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
 
 
@@ -41,9 +41,9 @@ var effects = new Array(KO, TKO, M, RM);
 
 // Set transparency knockout, toggle knockouts &/or constraint ++++++++
 
-if (selection != null && selection.length() > 0 && selection[0].className() != "MSSliceLayer") {
+if (selection != null && selection.count() > 0 && selection[0].className() != "MSSliceLayer") {
 
-for (var i=0; i<selection.length(); i++) {
+for (var i=0; i<selection.count(); i++) {
 
 	var currentBlend = selection[i].style().contextSettings().blendMode();
 	var parent = selection[i].parentGroup();
@@ -142,7 +142,7 @@ for (var i=0; i<selection.length(); i++) {
 
 // Do not show tooltip if knockout has just been toggled off.
 function testForKnockout() {
-	for (var i=0; i<selection.length(); i++) {
+	for (var i=0; i<selection.count(); i++) {
 		if (selection[i].style().contextSettings().blendMode() == 21) {
 			return true
 		}
@@ -154,7 +154,7 @@ if (tooltip == true && modifier == undefined && testForKnockout() == true) {
 
 // If constrain was chosen but no parent group exists, let them know.
 function testForGroup() {
-	for (var i=0; i<selection.length(); i++) {
+	for (var i=0; i<selection.count(); i++) {
 		if (selection[i].parentGroup().className() == "MSLayerGroup") {
 			return true
 		}
@@ -167,7 +167,7 @@ if (constrain == true && testForGroup() != true) {
 
 } // end "if selection" criteria ++++++++++++++++++
 
-else if (selection != null && selection.length() > 0 && selection[0].className() == "MSSliceLayer") {
+else if (selection != null && selection.count() > 0 && selection[0].className() == "MSSliceLayer") {
 	//doc.showMessage("This effect does not apply to slices.");
 }
 

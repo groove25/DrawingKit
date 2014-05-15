@@ -1,8 +1,8 @@
 // Draw Content Bounds
-// v.02b
+// v.02c
 // This command allows you to visualize the contentBounds() property for the current page by adding a rectangle to the canvas. Holding the Option key will allow you to view the page's frame as well. If you prefer, you can also draw guides to represent these properties by holding the Shift key, or by setting a preference within the script.
 
-// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Copyright (c) 2013–14 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
 
 
@@ -66,7 +66,7 @@ if (pageFrame == true) {
 	}
 	if (page.style().borders()[0] == null) {
 		page.style().borders().addNewStylePart();
-		page.style().borders()[0].setPosition(1); // inside
+		page.style().borders().objectAtIndex(0).setPosition(1); // inside
 	}
 	page.style().contextSettings().setOpacity(.3);
 	page.setName("page.frame()");
@@ -102,7 +102,7 @@ if (bounds.style().fills()[0] == null) {
 }
 if (bounds.style().borders()[0] == null) {
 	bounds.style().borders().addNewStylePart();
-	bounds.style().borders()[0].setPosition(1); // inside
+	bounds.style().borders().objectAtIndex(0).setPosition(1); // inside
 }
 bounds.style().contextSettings().setOpacity(.5);
 bounds.setName("contentBounds()");

@@ -1,5 +1,5 @@
 // Slice Padding
-// v.02c
+// v.02d
 // This command applies padding to a selected slice (or slices). To apply padding to all slices on the current page, hold the Option key when running the command.
 
 // Copyright (c) 2013–14 Doug Downing. All rights reserved.
@@ -23,41 +23,41 @@ var modifier;
 if (modFlags & modFlagOption) {modifier = "opt"}
 
 // Check for slices on page
-var slices = new Array();
+var docSlices = new Array();
 try {
-	for (var i=0; i<doc.currentPage().allSlices().length(); i++) {
-		slices.push(doc.currentPage().allSlices()[i]);
+	for (var i=0; i<doc.currentPage().allSlices().count(); i++) {
+		docSlices.push(doc.currentPage().allSlices().objectAtIndex(i));
 	}
 } catch(e) {
 	var exportables = doc.currentPage().exportableLayers();
-	for (var i=0; i<exportables.length(); i++) {
-		if (exportables[i].className().toString() === "MSSliceLayer") {
-			slices.push(exportables[i]);
+	for (var i=0; i<exportables.count(); i++) {
+		if (exportables.objectAtIndex(i).className().toString() == "MSSliceLayer") {
+			docSlices.push(exportables.objectAtIndex(i));
 		}
 	}
 }
 
 // Check for selected slices
 var selectedSlices = new Array();
-if (selection.length() > 0) {
-	for (var i=0; i<selection.length(); i++) {
-		if (selection[i].className().toString() === "MSSliceLayer") {
+if (selection.count() > 0) {
+	for (var i=0; i<selection.count(); i++) {
+		if (selection[i].className().toString() == "MSSliceLayer") {
 			selectedSlices.push(selection[i]);
 		}
 	}
 }
 
 // If Option key, apply padding to all slices
-if (modifier == "opt" && slices.length > 0) {
+if (modifier == "opt" && docSlices.length > 0) {
 	if (userInput == true) {
 		padding = doc.askForUserInput_initialValue("Enter positive or negative value for padding", padding.toString()).integerValue();
 	}
-	for (var i=0; i<slices.length; i++) {
+	for (var i=0; i<docSlices.length; i++) {
 		//slices[i].frame().expandBy(padding); // deprecated in Sketch 3
-		slices[i].frame().subtractX(padding); // reposition
-		slices[i].frame().subtractY(padding);
-		slices[i].frame().addWidth(padding*2); // resize
-		slices[i].frame().addHeight(padding*2);
+		docSlices[i].frame().subtractX(padding); // reposition
+		docSlices[i].frame().subtractY(padding);
+		docSlices[i].frame().addWidth(padding*2); // resize
+		docSlices[i].frame().addHeight(padding*2);
 	}
 }
 
@@ -74,12 +74,12 @@ else if (selectedSlices.length > 0) {
 		selectedSlices[i].frame().addHeight(padding*2);
 		}
 	// Tooltip
-	if (slices.length > 1 && selectedSlices.length < slices.length) {
+	if (docSlices.length > 1 && selectedSlices.length < docSlices.length) {
 		doc.showMessage("Add Option key (⌥) to apply padding to all slices.");
 	}
 }
 
-else if (selectedSlices.length == 0 && slices.length > 0) {
+else if (selectedSlices.length == 0 && docSlices.length > 0) {
 	doc.showMessage("Select a slice, or hold Option key (⌥) to apply padding to all slices.");
 }
 else {

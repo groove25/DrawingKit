@@ -1,5 +1,5 @@
 // Select All+ (option cmd a)
-// v.01b
+// v.01c
 // This command selects all objects on the current page, including any locked objects. This can be useful when trying to copy or move the contents of an entire page—without having to unlock and relock individual elements before and  after.
 // If an artboard is present, its contents are selected rather than the artboard itself.
 // Note that if you intend to move objects using the keyboard arrow keys, they must be unlocked beforehand. If moving using the arrow keys is part of your workflow, you can enable the unlocking of objects by holding the Option key while running the command (from the plug-ins menu) or by setting a preference for this behavior within User Variables. You may also want to try the ‘Lock or Unlock’ command for unlocking a mixed selection of locked and unlocked objects.
@@ -23,36 +23,36 @@ var modifier;
 if ((modFlags & modFlagOption) && !(modFlags & modFlagCommand)) {modifier = "opt"; unlock = !unlock;}
 
 // Deselect all, to prevent conflicts with selected children
-for (var i=0; i<selection.length(); i++) {
+for (var i=0; i<selection.count(); i++) {
 	selection[i].setIsSelected(false);
 }
 
 // Select first-level hierarchy within artboards, or on page
 var lockedObjects = new Array();
-for (var i=0; i<doc.currentPage().layers().length(); i++) {
-	if (doc.currentPage().layers()[i].className() == "MSArtboardGroup") {
-		var artboardLayers = doc.currentPage().layers()[i].layers();
-		for (var j=0; j<artboardLayers.length(); j++) {
-			artboardLayers[j].setIsSelected(true);
+for (var i=0; i<doc.currentPage().layers().count(); i++) {
+	if (doc.currentPage().layers().objectAtIndex(i).className() == "MSArtboardGroup") {
+		var artboardLayers = doc.currentPage().layers().objectAtIndex(i).layers();
+		for (var j=0; j<artboardLayers.count(); j++) {
+			artboardLayers.objectAtIndex(j).setIsSelected(true);
 			// Check for locked objects
-			if (artboardLayers[j].isLocked() == true) {
-				lockedObjects.push(artboardLayers[j]);
+			if (artboardLayers.objectAtIndex(j).isLocked() == true) {
+				lockedObjects.push(artboardLayers.objectAtIndex(j));
 			}
 			// Unlock objects, if specified by user
 			if (unlock == true) {
-				artboardLayers[j].setIsLocked(false);
+				artboardLayers.objectAtIndex(j).setIsLocked(false);
 			}
 		}
 	}
 	else {
-		doc.currentPage().layers()[i].setIsSelected(true);
+		doc.currentPage().layers().objectAtIndex(i).setIsSelected(true);
 		// Check for locked objects
-		if (doc.currentPage().layers()[i].isLocked() == true) {
-			lockedObjects.push(doc.currentPage().layers()[i]);
+		if (doc.currentPage().layers().objectAtIndex(i).isLocked() == true) {
+			lockedObjects.push(doc.currentPage().layers().objectAtIndex(i));
 		}
 		// Unlock objects, if specified by user
 		if (unlock == true) {
-			doc.currentPage().layers()[i].setIsLocked(false);
+			doc.currentPage().layers().objectAtIndex(i).setIsLocked(false);
 		}
 	}
 }

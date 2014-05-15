@@ -1,5 +1,5 @@
 // Create Guides
-// v.05y
+// v.05z
 // Create Guides is a multi-faceted command that allows you to quickly generate guides based on one or more selected objects, the boundaries of a selection, or an artboard or canvas. To apply guides to one or more objects, simply select the objects on the artboard or canvas, run the command, and enter the desired axes in the input dialog (L = left, R = right, T = top, B = bottom, H = horizontal center, V = vertical center). To apply guides based on the boundaries of the entire selection, hold the Option key while choosing the command. If nothing is selected on an artboard or canvas, the script will allow you to create incremental guides based on X, Y values that you specify. For the canvas, you may also specify boundaries (width and height) for the guides.
 
 // Copyright (c) 2013–2014 Doug Downing. All rights reserved.
@@ -49,7 +49,7 @@ else {
 // Setting and parsing input +++++++++++++++++
 
 // OBJECT + SELECTION
-if (selection != null && selection.length() > 0) {
+if (selection != null && selection.count() > 0) {
 	if (userInput == true) {
 		axis = doc.askForUserInput_initialValue("Choose: sides, center, all, L, R, T, B, H, V", axis);
 	}
@@ -62,7 +62,7 @@ if (selection != null && selection.length() > 0) {
 // Add .toString() to increments and contentWidth, etc?
 // Replace regExp with parseFloat()?
 
-else if ((selection == null || selection.length() == 0) && (artboard == true)) {
+else if ((selection == null || selection.count() == 0) && (artboard == true)) {
 	if (userInput == true) {
 		var increments = doc.askForUserInput_initialValue("Enter X, Y increments in pixels.", xIncrement + ", " + yIncrement);
 
@@ -77,7 +77,7 @@ else if ((selection == null || selection.length() == 0) && (artboard == true)) {
 	}
 }
 // CANVAS
-else if ((selection == null || selection.length() == 0) && (artboard != true)) {
+else if ((selection == null || selection.count() == 0) && (artboard != true)) {
 	
 	// NOTE: contentBounds X and Y position must also be adjusted for offset!
 	if (xOffset !=0) {contentWidth = contentWidth + (xOffset * 2);}
@@ -110,7 +110,7 @@ else if ((selection == null || selection.length() == 0) && (artboard != true)) {
 
 // Tooltip ++++++++++++++++++++++
 
-if (tooltip == true && selection != null && selection.length() > 1 && selectionBounds != true) {
+if (tooltip == true && selection != null && selection.count() > 1 && selectionBounds != true) {
 	doc.showMessage("For selection guides, hold Option key.");
 	//"Hold Option key to apply guides to selection bounds."
 }
@@ -119,13 +119,13 @@ if (tooltip == true && selection != null && selection.length() > 1 && selectionB
 
 var x1, x2, y1, y2, xMid, yMid;
 
-if ((selectionBounds == true) && (selection.length() > 1)) {
+if ((selectionBounds == true) && (selection.count() > 1)) {
 	var minXs = new Array(); 
 	var maxXs = new Array();
 	var minYs = new Array();
 	var maxYs = new Array();
 
-	for (var i=0; i<selection.length(); i++) {
+	for (var i=0; i<selection.count(); i++) {
 		var rect = selection[i].absoluteRect();
 		minXs.push(rect.x());
 		maxXs.push(rect.x() + rect.width());
@@ -145,7 +145,7 @@ if ((selectionBounds == true) && (selection.length() > 1)) {
 // Find context bounds + position +++++++++++++++
 
 var xCenter, yCenter, xStart, yStart;
-if (selection == null || selection.length() == 0) {
+if (selection == null || selection.count() == 0) {
 
 	if (artboard == true) {
 		width = context.absoluteRect().width();
@@ -173,10 +173,10 @@ if (selection == null || selection.length() == 0) {
 var xValues = new Array();
 var yValues = new Array();
 
-if (selection != null && selection.length() >= 1) {
+if (selection != null && selection.count() >= 1) {
 	var rulerXDiff, rulerYDiff;
 	if (artboard == true) {
-		var artRect = context.layers()[0].absoluteRect();
+		var artRect = context.layers().objectAtIndex(0).absoluteRect();
 		rulerXDiff = artRect.rulerX() - artRect.x();
 		rulerYDiff = artRect.rulerY() - artRect.y();
 	}
@@ -212,11 +212,11 @@ if (selection != null && selection.length() >= 1) {
 
 // NOTE: Selection guides have pre-defined x1, x2, y1, y2, xMid, yMid values that are applied only once, whereas object guides require finding and applying these values for every object individually, looping through the selection.
 
-if ((selectionBounds == true) && (selection != null && selection.length() > 1)) {
+if ((selectionBounds == true) && (selection != null && selection.count() > 1)) {
 	createAxisArrays();
 }
-else if (selection != null && selection.length() >= 1) {
-	for (var i=0; i<selection.length(); i++) {
+else if (selection != null && selection.count() >= 1) {
+	for (var i=0; i<selection.count(); i++) {
 		var rect = selection[i].absoluteRect();
 		x1 = rect.x();
 		x2 = rect.x() + rect.width();
@@ -227,7 +227,7 @@ else if (selection != null && selection.length() >= 1) {
 		createAxisArrays();
 	}
 }
-else if (selection == null || selection.length() == 0) {
+else if (selection == null || selection.count() == 0) {
 
 	var xLength, yLength;
 	if (xIncrement !=0) {xLength = width / xIncrement}

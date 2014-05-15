@@ -1,5 +1,5 @@
 // Grow
-// v.01c
+// v.01e
 // This command allows you to expand or contract an object (or objects) on all sides by a particular pixel amount. Note that expanding a group will produce a different outcome than expanding the objects within that group. Also, proportions are not strictly maintained by this command.
 // By default, non-square bitmaps are protected from being expanded/contracted, and the command will not run unless overridden by holding the Option key. This preference can be changed within the script’s ‘User Variables’ section.
 // Slices and artboards may also be expanded or contracted with this command.
@@ -23,12 +23,12 @@ var modFlags = [NSEvent modifierFlags];
 var modifier;
 if (modFlags & modFlagOption) {modifier = "opt"; lockBitmaps = !lockBitmaps;}
 
-if (selection != null && selection.length() > 0) {
+if (selection != null && selection.count() > 0) {
 
 	// Test for non-square bitmaps in selection ++++++++++++++++
 	// NOTE: Grouped bitmaps are NOT protected by this.
 	var bitmaps = new Array();
-	for (var i=0; i<selection.length(); i++) {
+	for (var i=0; i<selection.count(); i++) {
 		if (selection[i].className() == "MSBitmapLayer" && selection[i].frame().width()/selection[i].frame().height() != 1) {
 			bitmaps.push(selection[i]);
 		}
@@ -53,7 +53,7 @@ if (selection != null && selection.length() > 0) {
 
 		// To avoid disappearing objects and/or X-Y drift
 		var zeroAlert;
-		for (var i=0; i<selection.length(); i++) {
+		for (var i=0; i<selection.count(); i++) {
 			var w = selection[i].frame().width();
 			var h = selection[i].frame().height();
 			if ((w + (px*2) <= 0) || (h + (px*2) <= 0)) {zeroAlert = true;}
@@ -61,7 +61,7 @@ if (selection != null && selection.length() > 0) {
 
 		// Apply padding
 		if (zeroAlert != true) {
-			for (var i=0; i<selection.length(); i++) {
+			for (var i=0; i<selection.count(); i++) {
 
 				// If proportions are constrained, unlock them
 				var constrain = selection[i].frame().constrainProportions();
@@ -83,9 +83,9 @@ if (selection != null && selection.length() > 0) {
 				// If artboard, reposition contents (and guides)
 				if (selection[i].className() == "MSArtboardGroup") {
 					var artboard = selection[i];
-					for (var l=0; l<artboard.layers().length(); l++) {
-						artboard.layers()[l].frame().addX(px);
-						artboard.layers()[l].frame().addY(px);
+					for (var l=0; l<artboard.layers().count(); l++) {
+						artboard.layers().objectAtIndex(l).frame().addX(px);
+						artboard.layers().objectAtIndex(l).frame().addY(px);
 					}
 					// Reposition existing guides
 					var xGuides = artboard.horizontalRulerData();
@@ -132,7 +132,7 @@ if (selection != null && selection.length() > 0) {
 		}
 	}
 
-} // end if (selection != null && selection.length() > 0)
+} // end if (selection != null && selection.count() > 0)
 
 // NOTES
 // Thanks to Jeff Biggus (HyperJeff, Inc.) for help with modifier keys!

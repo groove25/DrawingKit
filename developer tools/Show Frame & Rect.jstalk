@@ -1,8 +1,9 @@
 // Show Frame & Rect
+// v.01b
 // This command offers quick access to the position and size of a selection in terms of its frame or GKRect, absoluteRect, and rulerX/Y properties, to increase familiarity with the different position systems used by these properties.
 // There are two presentation styles. Holding the Option key when choosing the script will allow you to view the alternate style. The default preference may be set within the script.
 
-// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Copyright (c) 2013–14 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
 
 
@@ -24,16 +25,16 @@ if (modFlags & modFlagOption) {XYWH = !XYWH;} // set XYWH to opposite
 
 // Find selection bounds (ala artboard)
 
-if (selection != null && selection.length() > 0) {
+if (selection != null && selection.count() > 0) {
 
-	if (selection.length() > 1) {
+	if (selection.count() > 1) {
 
 		// frame().GKRect()
 		var minXs = new Array(); 
 		var maxXs = new Array();
 		var minYs = new Array();
 		var maxYs = new Array();
-		for (var i=0; i<selection.length(); i++) {
+		for (var i=0; i<selection.count(); i++) {
 			var rect = selection[i].frame();
 			minXs.push(rect.minX());
 			maxXs.push(rect.maxX());
@@ -52,7 +53,7 @@ if (selection != null && selection.length() > 0) {
 		var absMaxXs = new Array();
 		var absMinYs = new Array();
 		var absMaxYs = new Array();
-		for (var i=0; i<selection.length(); i++) {
+		for (var i=0; i<selection.count(); i++) {
 			var rect = selection[i].absoluteRect();
 			absMinXs.push(rect.minX());
 			absMaxXs.push(rect.maxX());
@@ -69,7 +70,7 @@ if (selection != null && selection.length() > 0) {
 		// Ruler X & Y
 		var absRulerXs = new Array(); 
 		var absRulerYs = new Array();
-		for (var i=0; i<selection.length(); i++) {
+		for (var i=0; i<selection.count(); i++) {
 			var rect = selection[i].absoluteRect();
 			absRulerXs.push(rect.rulerX());
 			absRulerYs.push(rect.rulerY());

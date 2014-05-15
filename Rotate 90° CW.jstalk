@@ -1,9 +1,9 @@
 // Rotate 90° CW (cmd shift 9)
-// v.04
+// v.04b
 // This is a recreation of a standard Fireworks command and shortcut, allowing you to rotate an object or selection 90 degrees clockwise. To avoid blurry edges and strokes, a ‘snap to pixel’ option is included and is enabled by default.
 // Note that if you prefer to rotate each object in a selection individually, you may hold the Option key when running the command. However, the Option key modifier will not work with the command's assigned keyboard shortcut.
 
-// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Copyright (c) 2013–14 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
 
 
@@ -27,13 +27,13 @@ if (modFlags & modFlagOption) {rotateEach = true}
 
 // Find selection bounds
 
-if (selection.length() > 1 && rotateEach == false) {
+if (selection.count() > 1 && rotateEach == false) {
 	var minXs = new Array(); 
 	var maxXs = new Array();
 	var minYs = new Array();
 	var maxYs = new Array();
 
-	for (var i=0; i<selection.length(); i++) {
+	for (var i=0; i<selection.count(); i++) {
 		var rect = selection[i].absoluteRect();
 		minXs.push(rect.minX());
 		maxXs.push(rect.maxX());
@@ -55,7 +55,7 @@ if (selection.length() > 1 && rotateEach == false) {
 
 	// Rotate + position objects
 
-	for (var i=0; i<selection.length(); i++) {
+	for (var i=0; i<selection.count(); i++) {
 		var x = selection[i].absoluteRect().x();
 		var y = selection[i].absoluteRect().y();
 		//var midX = selection[i].absoluteRect().midX();
@@ -76,8 +76,8 @@ if (selection.length() > 1 && rotateEach == false) {
 
 // For individual selections
 
-else if (selection.length() == 1 || rotateEach == true) {
-	for (var i=0; i<selection.length(); i++) {
+else if (selection.count() == 1 || rotateEach == true) {
+	for (var i=0; i<selection.count(); i++) {
 		var angle = 90;
 		var deg = selection[i].rotation() - angle;
 		selection[i].setRotation(deg);
@@ -87,7 +87,7 @@ else if (selection.length() == 1 || rotateEach == true) {
 // Snap to pixel ++++++++++++++++++++
 
 if (snapToPixel == true) {
-	for (var i=0; i<selection.length(); i++) {
+	for (var i=0; i<selection.count(); i++) {
 		var x = selection[i].absoluteRect().x();
 		var y = selection[i].absoluteRect().y();
 		selection[i].absoluteRect().setX(Math.round(x));

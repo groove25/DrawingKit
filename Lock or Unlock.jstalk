@@ -1,5 +1,5 @@
 // Lock or Unlock (option cmd l)
-// v.01a
+// v.01b
 // This command allows you to lock or unlock all objects within a selection. If the selection includes some locked layers already, the command will unlock them. Otherwise, it will lock all layers within the selection.
 // The Opt-Cmd-L (⌥⇧L) shortcut may be used to run the command multiple times.
 // Sketch's existing Lock/Unlock Layers command (⌘⇧L) does not effectively handle selections that include both locked and unlocked objects. Instead of uniformly locking or unlocking all objects within the selection, it toggles the state of each layer independently, maintaining the mixed setting. This command is designed as a substitute.
@@ -16,14 +16,14 @@ var lock = false;		// Set to true to lock all objects by default
 
 // Check for locked objects
 var lockedObjects = new Array();
-for (var i=0; i<selection.length(); i++) {
+for (var i=0; i<selection.count(); i++) {
 	if (selection[i].isLocked() == true) {
 		lockedObjects.push(selection[i]);
 	}
 }
 // Lock or unlock
-for (var i=0; i<selection.length(); i++) {
-	if ((lock == true && lockedObjects.length < selection.length()) || lockedObjects.length == 0) {
+for (var i=0; i<selection.count(); i++) {
+	if ((lock == true && lockedObjects.length < selection.count()) || lockedObjects.length == 0) {
 		selection[i].setIsLocked(true);
 	}
 	else {

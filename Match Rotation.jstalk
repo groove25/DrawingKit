@@ -1,10 +1,10 @@
 // Match Rotation
-// v.01b
+// v.01c
 // This is a simple command that allows one to either match the rotation of a key object within a selection or specify an angle to be applied to all objects. It is essentially a companion to the Match Size command, which includes a rotation option, but not as a standalone feature.
 // Hold the Option key to view the exact angle of the suggested key object. Hold the Shift key to add or subtract from all angles at once. When applied to a single selected object, this command will automatically display the object's angle of rotation, as a value up to 14 decimal places.
 // Future versions may include an incremental or progressive rotation option.
 
-// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Copyright (c) 2013–14 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
 
 // USER VARIABLES
@@ -26,7 +26,7 @@ var modifier, increment;
 if (modFlags & modFlagOption) {modifier = "opt"; showAngle = !showAngle;}
 if (modFlags & modFlagShift) {modifier = "shift"; increment = true;}
 
-if (selection != null && selection.length() == 1) {
+if (selection != null && selection.count() == 1) {
 
 	if (increment == true) {
 		var input = [doc askForUserInput:"Adjust the angle of rotation (+/-)" initialValue: "10°"]
@@ -44,12 +44,12 @@ if (selection != null && selection.length() == 1) {
 	}
 }
 
-else if (selection != null && selection.length() >=2) {
+else if (selection != null && selection.count() >=2) {
 
 	if (increment == true) {
 		var input = [doc askForUserInput:"Enter rotation increment (+/-)" initialValue: "10°"]
 		if (input != null) {input = parseFloat(input);}
-		for (var i=0; i<selection.length(); i++) {
+		for (var i=0; i<selection.count(); i++) {
 			var angle = selection[i].rotation();
 			selection[i].setRotation(angle + input);
 		}
@@ -59,7 +59,7 @@ else if (selection != null && selection.length() >=2) {
 
 	// Suggested key object ++++++++++++++
 	function firstNonZeroObject() {
-		for (var i=0; i<selection.length(); i++) {
+		for (var i=0; i<selection.count(); i++) {
 			var deg = selection[i].rotation();
 			if (deg != 0) {return i}
 		}
@@ -73,18 +73,18 @@ else if (selection != null && selection.length() >=2) {
 	// Parsing input ++++++++++++++++++
 	var input = [doc askForUserInput:"Specify layer number or angle (e.g., 45deg)" initialValue: suggestedValue.toString()]
 
-	if (input.indexOf("deg") < 0 && input > 0 && input <= selection.length() + buffer) {
+	if (input.indexOf("deg") < 0 && input > 0 && input <= selection.count() + buffer) {
 
 		// Key object + rotation ++++++++++++++
 		var keyIndex;
 		if (input == 0 || input < 0) {keyIndex = 0}
-		else if (input > selection.length()) {keyIndex = selection.length() - 1}
+		else if (input > selection.count()) {keyIndex = selection.count() - 1}
 		else {keyIndex = input - 1}
 		var keyObj = selection[keyIndex];
 		var keyDeg = selection[keyIndex].rotation();
 
 		// Match rotation ++++++++++
-		for (var i=0; i<selection.length(); i++) {
+		for (var i=0; i<selection.count(); i++) {
 			if (selection[i] == keyObj) continue;
 			selection[i].setRotation(keyDeg);
 		}
@@ -93,7 +93,7 @@ else if (selection != null && selection.length() >=2) {
 	else {
 		// Set rotation by angle ++++++++++
 		var angle = parseFloat(input);
-		for (var i=0; i<selection.length(); i++) {
+		for (var i=0; i<selection.count(); i++) {
 			selection[i].setRotation(angle);
 		}
 	}
@@ -109,10 +109,10 @@ else if (selection != null && selection.length() >=2) {
 	} // end else ++++++++++++++++++++
 
 
-} // end (if selection.length() >=2)
+} // end (if selection.count() >=2)
 
 
-else if (selection != null && selection.length() > 0 && selection[0].className() == "MSSliceLayer") {}
+else if (selection != null && selection.count() > 0 && selection[0].className() == "MSSliceLayer") {}
 
 else {
 	doc.showMessage("Select 2 or more objects, one at the desired rotation.");

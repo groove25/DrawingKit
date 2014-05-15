@@ -1,12 +1,12 @@
-// Blend - Mask, a.k.a. Mask with Underlying Layers
-// v.03g
+// Blend - Masked, a.k.a. Mask with Underlying Layers
+// v.03h
 // This command offers a quick way to mask a single object (or selection of objects) with underlying layers. Unlike Sketch's vector masking tools, any outside borders and effects are included in the mask.
 // To constrain the mask, hold the Shift key while running the command; this applies a mask blend to the parent group—if one exists—limiting the scope of the effect to the group rather than all underlying layers. (A side effect of this technique is that the group itself may appear clipped. Sorry! It's an imperfect system.)
 // Note that this masking effect may temporarily disable the blend mode menu for any object to which its applied; running the command a second time will turn off the effect and restore any disabled blend mode options. (The Blend - Forward and Blend - Backward commands may also be used to access these blend modes.)
 
 // NEW: Hold the Option key to apply a "Reverse Mask" (a.k.a. silhouette) effect! Overlapping portions of the selected object(s) knock out the underlying layers, while outlying portions are preserved. Be warned that strokes (and other effects) may render oddly when using this setting.
 
-// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Copyright (c) 2013–14 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
 
 // USER VARIABLES
@@ -40,9 +40,9 @@ var effects = new Array(KO, TKO, M, RM);
 
 // Toggle mask &/or constraint ++++++++++++++++++++++++++++
 
-if (selection != null && selection.length() > 0 && selection[0].className() != "MSSliceLayer") {
+if (selection != null && selection.count() > 0 && selection[0].className() != "MSSliceLayer") {
 
-for (var i=0; i<selection.length(); i++) {
+for (var i=0; i<selection.count(); i++) {
 
 	var currentBlend = selection[i].style().contextSettings().blendMode();
 	var parent = selection[i].parentGroup();
@@ -142,7 +142,7 @@ for (var i=0; i<selection.length(); i++) {
 
 // Do not show tooltip if mask has just been toggled off.
 function testForMask() {
-	for (var i=0; i<selection.length(); i++) {
+	for (var i=0; i<selection.count(); i++) {
 		if (selection[i].style().contextSettings().blendMode() == 18) {
 			return true
 		}
@@ -154,7 +154,7 @@ if (tooltip == true && modifier == undefined && testForMask() == true) {
 
 // If constrain was chosen but no parent group exists, let them know.
 function testForGroup() {
-	for (var i=0; i<selection.length(); i++) {
+	for (var i=0; i<selection.count(); i++) {
 		if (selection[i].parentGroup().className() == "MSLayerGroup") {
 			return true
 		}
@@ -167,7 +167,7 @@ if (constrain == true && testForGroup() != true) {
 
 } // end "if selection" criteria ++++++++++++++++++
 
-else if (selection != null && selection.length() > 0 && selection[0].className() == "MSSliceLayer") {
+else if (selection != null && selection.count() > 0 && selection[0].className() == "MSSliceLayer") {
 	//doc.showMessage("This effect does not apply to slices.");
 }
 

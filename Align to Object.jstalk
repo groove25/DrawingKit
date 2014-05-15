@@ -1,5 +1,5 @@
 // Align to Object
-// v.04c
+// v.04d
 // This command aligns selected layers or groups to a ‘key object’ within the selection. Alignments are specified as follows: L = Left, R = Right, T = Top, B = Bottom, H = Horizontal Center, V = Vertical Center, C = Center. The key object is designated by its position in the layer stack, from the bottom upwards: 1, 2, 3, etc. (If no object is specified, the bottom layer in the selection becomes the key object.)
 // As an example, H1 indicates Horizontal Center alignment to the 1st or bottom object. T3 indicates Top alignment to the 3rd object. L indicates Left alignment to the bottom object (the default key object).
 // Objects may be aligned along both axes by combining letters. For example, use TL, TR, BL, or BR for corners. For midpoints, use LC, RC, TC, BC.
@@ -23,7 +23,7 @@ var tooltip = true; 	// To allow tooltip for modifer key
 
 // SCRIPT STARTS HERE
 
-if (selection != null && selection.length() >=2) {
+if (selection != null && selection.count() >=2) {
 
 	// Modifier key: Option ++++++++++++++++++
 
@@ -91,7 +91,7 @@ if (selection != null && selection.length() >=2) {
 	// Key object: Fix index #, set to 0 as backup (for NaN or 0 input)
 	var keyIndex = number - 1;
 	if (isNaN(keyIndex) == true || keyIndex < 0) {keyIndex = 0;}
-	else if (keyIndex > selection.length()-1) {keyIndex = selection.length()-1;}
+	else if (keyIndex > selection.count()-1) {keyIndex = selection.count()-1;}
 
 	if (relativeAlign == false) {
 		var keyObj = selection[keyIndex].absoluteRect();
@@ -109,7 +109,7 @@ if (selection != null && selection.length() >=2) {
 	var vCenter = new Array('V','LC','RC');
 	var center = new Array('C');
 
-	for (var i=0; i<selection.length(); i++) {
+	for (var i=0; i<selection.count(); i++) {
 	
 		var rect;
 		if (relativeAlign == false) {rect = selection[i].absoluteRect()}
@@ -144,7 +144,7 @@ if (selection != null && selection.length() >=2) {
 	var roundable = new Array();
 	var allCenter = hCenter.concat(vCenter,center);
 	if (allCenter.indexOf(align) > -1) {
-		for (var i=0; i<selection.length(); i++) {
+		for (var i=0; i<selection.count(); i++) {
 			var rect;
 			if (relativeAlign == false) {rect = selection[i].absoluteRect()}
 			else {rect = selection[i].frame()}
@@ -167,9 +167,9 @@ if (selection != null && selection.length() >=2) {
 	
 	}
 
-} // end if (selection.length() >=2)
+} // end if (selection.count() >=2)
 
-else if (selection != null && selection.length() > 0 && selection[0].className() == "MSSliceLayer") {}
+else if (selection != null && selection.count() > 0 && selection[0].className() == "MSSliceLayer") {}
 
 else {doc.showMessage("Select at least 2 objects, including a ‘key’ object.")}
 

@@ -1,9 +1,9 @@
 // Zoom to Percent
-// v.05
+// v.05b
 // This command allows you to view a document at a custom zoom percentage. If there's a zoom percentage that you use frequently, you may enter its value in the User Variables section and access it by holding the Option key when you run the command. Alternatively, you may disable the user input dialog so that the same zoom setting is applied every time the script is run. (If you disable user input, you may still access the input dialog on an as-needed basis by holding the Option key when running the command.)
 // A centering option is also included and is enabled by default.
 
-// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Copyright (c) 2013–14 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: dougdowning.com
 
 
@@ -39,9 +39,9 @@ doc.setZoomValue(zoom * .01);
 
 if (center == true) {
 	var context;
-	if (selection != null && selection.length() >= 1) {
+	if (selection != null && selection.count() >= 1) {
 		var x1, y1, width, height;
-		if (selection.length() == 1) {
+		if (selection.count() == 1) {
 			x1 = selection[0].absoluteRect().x();
 			y1 = selection[0].absoluteRect().y();
 			width = selection[0].absoluteRect().width();
@@ -52,7 +52,7 @@ if (center == true) {
 			var maxXs = new Array();
 			var minYs = new Array();
 			var maxYs = new Array();
-			for (var i=0; i<selection.length(); i++) {
+			for (var i=0; i<selection.count(); i++) {
 				var rect = selection[i].absoluteRect();
 				minXs.push(rect.x());
 				maxXs.push(rect.x() + rect.width());

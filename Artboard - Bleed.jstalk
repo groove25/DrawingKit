@@ -1,8 +1,8 @@
 // Artboard Bleed
-// v.02
+// v.02b
 // This command allows you to add bleed to an existing artboard and its contents, without having to manually adjust the artboard size, reposition objects and guides, and so on. By default, it adds guides to indicate the bleed lines, but this aspect can be disabled by holding the Option key when running the command, or by altering a preference within the script.
 
-// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Copyright (c) 2013–14 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
 
 // USER VARIABLES
@@ -65,9 +65,9 @@ if (doc.currentPage().currentArtboard() != null) {
 	// Reposition elements
 	
 	var layers = artboard.layers();
-	for (var i=0; i<layers.length(); i++) {
-		layers[i].frame().addX(left);
-		layers[i].frame().addY(top);
+	for (var i=0; i<layers.count(); i++) {
+		layers.objectAtIndex(i).frame().addX(left);
+		layers.objectAtIndex(i).frame().addY(top);
 	}
 	
 	// Reposition existing guides

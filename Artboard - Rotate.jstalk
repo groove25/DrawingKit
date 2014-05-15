@@ -1,5 +1,5 @@
 // Artboard - Rotate
-// v.01e
+// v.01f
 // This command allows you to change the orientation of an artboard from portrait to landscape, or vice versa. The artboard's contents will be rotated, as well as any guides. By default, the command rotates in a clockwise direction. To rotate counter-clockwise, hold the Option key. To rotate the artboard only, without contents or guides, hold the Shift key.
 // TIP: For best results, flatten any artboard contents after rotating.
 
@@ -35,15 +35,15 @@ if (doc.currentPage().currentArtboard() != null) {
 	var layers = artboard.layers();
 	
 	// Tooltip
-	if (tooltip == true && layers.length() > 0) {
+	if (tooltip == true && layers.count() > 0) {
 		var mostlyLessThan90;
 		if (modifier != "opt" || modifier2 != "shift") {
 			var lessThan90 = new Array();
-			for (var i=0; i<layers.length(); i++) {
-				var deg = layers[i].rotation();
+			for (var i=0; i<layers.count(); i++) {
+				var deg = layers.objectAtIndex(i).rotation();
 				if (Math.abs(deg) < 90 || Math.abs(deg) > 270) {lessThan90.push(deg);}
 			}
-			if (lessThan90.length > layers.length() / 2) {
+			if (lessThan90.length > layers.count() / 2) {
 				mostlyLessThan90 = true;
 			}
 		}
@@ -66,22 +66,22 @@ if (doc.currentPage().currentArtboard() != null) {
 
 	// Rotate contents and reposition
 	if (rotateContents == true) {
-		for (var i=0; i<layers.length(); i++) {
-			var x = layers[i].absoluteRect().rulerX();
-			var y = layers[i].absoluteRect().rulerY();
-			var w = layers[i].absoluteRect().width();
-			var h = layers[i].absoluteRect().height();
-			var deg = layers[i].rotation();
+		for (var i=0; i<layers.count(); i++) {
+			var x = layers.objectAtIndex(i).absoluteRect().rulerX();
+			var y = layers.objectAtIndex(i).absoluteRect().rulerY();
+			var w = layers.objectAtIndex(i).absoluteRect().width();
+			var h = layers.objectAtIndex(i).absoluteRect().height();
+			var deg = layers.objectAtIndex(i).rotation();
 
 			if (clockwise == true) {
-				layers[i].setRotation(deg - 90);
-				layers[i].absoluteRect().setRulerY(x);
-				layers[i].absoluteRect().setRulerX(artHeight - (y + h));
+				layers.objectAtIndex(i).setRotation(deg - 90);
+				layers.objectAtIndex(i).absoluteRect().setRulerY(x);
+				layers.objectAtIndex(i).absoluteRect().setRulerX(artHeight - (y + h));
 			}
 			else if (clockwise != true) {
-				layers[i].setRotation(deg + 90);
-				layers[i].absoluteRect().setRulerX(y);
-				layers[i].absoluteRect().setRulerY(artWidth - (x + w));
+				layers.objectAtIndex(i).setRotation(deg + 90);
+				layers.objectAtIndex(i).absoluteRect().setRulerX(y);
+				layers.objectAtIndex(i).absoluteRect().setRulerY(artWidth - (x + w));
 			}
 		}
 	}
