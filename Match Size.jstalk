@@ -1,11 +1,11 @@
 // Match Size
-// v.03c
+// v.03e
 // This command resizes selected layers or groups to match a key object within the selection. The key object is designated by its position in the selection's layer stack, from the bottom upwards: 1, 2, 3, etc. (If no object is specified, the bottom layer in the selection becomes the key object.) To match width or height only, add W or H to the input.
-// This script is ideal for a series of similar items such as inserted bitmaps. Once the first bitmap has been resized, the remaining bitmaps can be sized very quickly. Note, however, that a bitmap's original proportions will typically be maintained when resizing. In such cases, add W or H to specify which dimension you wish to match.
+// This script is ideal for a series of similar items such as inserted bitmaps. Once the first bitmap has been resized, the remaining bitmaps can be sized very quickly. Note, however, that a bitmap's original proportions will typically be maintained when resizing. In such cases, add W or H to specify which dimension you wish to match. (When resizing along a single dimension using W or H, holding the Shift key will ensure that *all* objects maintain their original proportions—including those whose proportions are unlocked.)
 // By default, this command also matches rotation. This can be disabled by holding the Option key when choosing the command, or by changing a preference within the script.
-// NEW: When resizing along a single dimension (using W or H), holding the Shift key will ensure that all objects maintain their original proportions—including those whose proportions are unlocked.
+// NEW: An object may now be quickly resized to its artboard (or vice versa). Simply select the object and run the command. Enter 'artboard' to match to the artboard's size, or 'object' to match to the object's size.
 
-// Copyright (c) 2013 Doug Downing. All rights reserved.
+// Copyright (c) 2013–14 Doug Downing. All rights reserved.
 // Email: drawingkit@dougdowning.com // Website: www.dougdowning.com
 
 
@@ -18,7 +18,7 @@ var tooltip = true;
 
 // SCRIPT STARTS HERE
 
-if (selection != null && selection.length() >=2) {
+if (selection != null && selection.count() >=2) {
 
 	// Modifier keys +++++++++++++++
 	// Option: Rotation; Shift: Constrain
@@ -32,16 +32,17 @@ if (selection != null && selection.length() >=2) {
 
 	// Parsing input ++++++++++++++++++
 	var nonTextObjects = new Array();
-	for (var i=0; i<selection.length(); i++) {
+	for (var i=0; i<selection.count(); i++) {
 		if (selection[i].className() != "MSTextLayer") {
 			nonTextObjects.push(selection[i]);
 		}
 	}
+	var input;
 	if (nonTextObjects.length == 0 && matchFontSize == true) {
-		var input = [doc askForUserInput:"Specify layer number." initialValue:"1"]
+		input = [doc askForUserInput:"Specify layer number." initialValue:"1"]
 	}
 	else {
-		var input = [doc askForUserInput:"Specify layer number. Add W or H to limit (optional)." initialValue:"1"]
+		input = [doc askForUserInput:"Specify layer number. Add W or H to limit (optional)." initialValue:"1"]
 	}
 	// Test first and last character (isNaN = letter) and slice string
 	var letter, number;
@@ -64,7 +65,7 @@ if (selection != null && selection.length() >=2) {
 	// Key object: Fix index #, set to 0 as backup (for NaN or 0 input)
 	var keyIndex = number - 1;
 	if (isNaN(keyIndex) == true || keyIndex < 0) {keyIndex = 0;}
-	else if (keyIndex > selection.length()-1) {keyIndex = selection.length()-1;}
+	else if (keyIndex > selection.count()-1) {keyIndex = selection.count()-1;}
 	var keyObj = selection[keyIndex];
 
 	// Find dimensions +++++++++++++
@@ -75,7 +76,7 @@ if (selection != null && selection.length() >=2) {
 
 	// Set dimensions +++++++++++++++++++
 	var unlocked = new Array(); // For constrain tooltip
-	for (var i=0; i<selection.length(); i++) {
+	for (var i=0; i<selection.count(); i++) {
 		if (selection[i] == keyObj) continue; // avoid resizing target
 		
 		// Text frames do not affect text size; adjust font size instead
@@ -113,7 +114,7 @@ if (selection != null && selection.length() >=2) {
 
 	// Check angles ++++++++++
 	var angles = new Array();
-	for (var i=0; i<selection.length(); i++) {
+	for (var i=0; i<selection.count(); i++) {
 		var deg = selection[i].rotation();
 		if (deg != keyDeg) {
 			angles.push(deg);
@@ -122,7 +123,7 @@ if (selection != null && selection.length() >=2) {
 
 	// Match rotation ++++++++++
 	if (rotate == true) {
-		for (var i=0; i<selection.length(); i++) {
+		for (var i=0; i<selection.count(); i++) {
 			if (selection[i] == keyObj) continue;
 			selection[i].setRotation(keyDeg);
 		}
@@ -151,9 +152,28 @@ if (selection != null && selection.length() >=2) {
 		}
 	}
 
-} // end (if selection.length() >=2)
+} // end (if selection.count() >=2)
 
-else if (selection != null && selection.length() > 0 && selection[0].className() == "MSSliceLayer") {}
+else if (selection.count() == 1 && doc.currentPage().currentArtboard() != null) {
+	var input = doc.askForUserInput_initialValue("Match to ‘object’ or ‘artboard’ as key object.", "artboard");
+	// Parse input to accept cases and 'obj, ob, o' or 'art, a'
+
+	var keyWidth, keyHeight;
+	if (input == "artboard") {
+		keyWidth = doc.currentPage().currentArtboard().frame().width();
+		keyHeight = doc.currentPage().currentArtboard().frame().height();
+		selection[0].frame().setWidth(keyWidth);
+		selection[0].frame().setHeight(keyHeight);
+	}
+	if (input == "object") {
+		keyWidth = selection[0].frame().width();
+		keyHeight = selection[0].frame().height();
+		doc.currentPage().currentArtboard().frame().setWidth(keyWidth);
+		doc.currentPage().currentArtboard().frame().setHeight(keyHeight);
+	}
+}
+
+else if (selection != null && selection.count() > 0 && selection[0].className() == "MSSliceLayer") {}
 
 else {
 	doc.showMessage("Select 2 or more objects, one at the desired size.");
