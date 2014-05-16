@@ -1,5 +1,5 @@
 // Match Size
-// v.03e
+// v.03h
 // This command resizes selected layers or groups to match a key object within the selection. The key object is designated by its position in the selection's layer stack, from the bottom upwards: 1, 2, 3, etc. (If no object is specified, the bottom layer in the selection becomes the key object.) To match width or height only, add W or H to the input.
 // This script is ideal for a series of similar items such as inserted bitmaps. Once the first bitmap has been resized, the remaining bitmaps can be sized very quickly. Note, however, that a bitmap's original proportions will typically be maintained when resizing. In such cases, add W or H to specify which dimension you wish to match. (When resizing along a single dimension using W or H, holding the Shift key will ensure that *all* objects maintain their original proportions—including those whose proportions are unlocked.)
 // By default, this command also matches rotation. This can be disabled by holding the Option key when choosing the command, or by changing a preference within the script.
@@ -154,22 +154,114 @@ if (selection != null && selection.count() >=2) {
 
 } // end (if selection.count() >=2)
 
-else if (selection.count() == 1 && doc.currentPage().currentArtboard() != null) {
+else if (selection.count() == 1 && doc.currentPage().currentArtboard() != null && selection[0].className() != "MSArtboardGroup") {
+
 	var input = doc.askForUserInput_initialValue("Match to ‘object’ or ‘artboard’ as key object.", "artboard");
-	// Parse input to accept cases and 'obj, ob, o' or 'art, a'
+	// Parse input to accept cases and 'obj, ob, o' or 'art, a', etc.
+	input = input.slice(0,1).toLowerCase(); // 1st character, lowercase
+	if (input == "a") {input = "artboard";}
+	if (input == "o") {input = "object";}
 
 	var keyWidth, keyHeight;
 	if (input == "artboard") {
 		keyWidth = doc.currentPage().currentArtboard().frame().width();
 		keyHeight = doc.currentPage().currentArtboard().frame().height();
-		selection[0].frame().setWidth(keyWidth);
-		selection[0].frame().setHeight(keyHeight);
+
+		// Adjust frame for non-rotated objects
+		if (selection[0].rotation() == 0) {
+			selection[0].frame().setWidth(keyWidth);
+			selection[0].frame().setHeight(keyHeight);
+		}
+		// Adjust absoluteRect for rotated objects
+		else {
+			// Setting width + height here is tricky; a 'while' loop never ends
+			// Loop 10x: an arbitrary amount but seems to work well
+			for (var i=0; i<10; i++) {
+				selection[0].absoluteRect().setWidth(keyWidth);
+				selection[0].absoluteRect().setHeight(keyHeight);
+			}
+		}
+
+		// Reposition selection at 0,0 (again using absoluteRect)
+		selection[0].absoluteRect().setRulerX(0);
+		selection[0].absoluteRect().setRulerY(0);
 	}
 	if (input == "object") {
-		keyWidth = selection[0].frame().width();
-		keyHeight = selection[0].frame().height();
+		// Use absoluteRect in case of object rotation
+		keyWidth = selection[0].absoluteRect().width();
+		keyHeight = selection[0].absoluteRect().height();
+		// Apply to artboard frame
 		doc.currentPage().currentArtboard().frame().setWidth(keyWidth);
 		doc.currentPage().currentArtboard().frame().setHeight(keyHeight);
+		// Reposition selection at 0,0 (again using absoluteRect)
+		selection[0].absoluteRect().setRulerX(0);
+		selection[0].absoluteRect().setRulerY(0);
+	}
+}
+
+else if (selection.count() == 1 && selection[0].className() == "MSArtboardGroup") {
+
+	var artboard = selection[0];
+
+	// Find boundaries of artboard content
+	var artLayers = artboard.layers();
+	var minXs = new Array(); 
+	var maxXs = new Array();
+	var minYs = new Array();
+	var maxYs = new Array();
+
+	for (var i=0; i<artLayers.count(); i++) {
+		var rect = artLayers.objectAtIndex(i).absoluteRect();
+		minXs.push(rect.rulerX());
+		maxXs.push(rect.rulerX() + rect.width());
+		minYs.push(rect.rulerY());
+		maxYs.push(rect.rulerY() + rect.height());
+	}
+	var x1 = Math.min.apply(Math, minXs);
+	var x2 = Math.max.apply(Math, maxXs);
+	var y1 = Math.min.apply(Math, minYs);
+	var y2 = Math.max.apply(Math, maxYs);
+
+	// Find width + height
+	var contentWidth = x2 - x1;
+	var contentHeight = y2 - y1;
+
+	// Resize artboard
+	artboard.frame().setWidth(contentWidth);
+	artboard.frame().setHeight(contentHeight);
+
+	// Reposition content
+	for (var i=0; i<artLayers.count(); i++) {
+		var objectX = artLayers.objectAtIndex(i).absoluteRect().rulerX();
+		var objectY = artLayers.objectAtIndex(i).absoluteRect().rulerY();
+		artLayers.objectAtIndex(i).absoluteRect().setRulerX(objectX - x1);
+		artLayers.objectAtIndex(i).absoluteRect().setRulerY(objectY - y1);
+	}
+
+	// Reposition existing guides
+	var xGuides = artboard.horizontalRulerData().numberOfGuides();
+	if (xGuides > 0) {
+		var xValues = new Array();
+		for (var i=0; i<xGuides; i++) {
+			var x = artboard.horizontalRulerData().guideAtIndex(0);
+			artboard.horizontalRulerData().removeGuideAtIndex(0);
+			xValues.push(x - x1);
+		}
+		for (var i=0; i<xValues.length; i++) {
+			artboard.horizontalRulerData().addGuideWithValue(xValues[i]);
+		}
+	}
+	var yGuides = artboard.verticalRulerData().numberOfGuides();
+	if (yGuides > 0) {
+		var yValues = new Array();
+		for (var i=0; i<yGuides; i++) {
+			var y = artboard.verticalRulerData().guideAtIndex(0);
+			artboard.verticalRulerData().removeGuideAtIndex(0);
+			yValues.push(y - y1);
+		}
+		for (var i=0; i<yValues.length; i++) {
+			artboard.verticalRulerData().addGuideWithValue(yValues[i]);
+		}
 	}
 }
 
